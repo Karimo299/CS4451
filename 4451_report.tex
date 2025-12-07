@@ -12,10 +12,8 @@
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
 
-\title{Conference Paper Title*\\
-{\footnotesize \textsuperscript{*}Note: Sub-titles are not captured in Xplore and
-should not be used}
-\thanks{Identify applicable funding agency here. If none, delete this.}
+\title{Brain Tumor Classification from MRI Radiomic and Image Features\\
+
 }
 
 \author{\IEEEauthorblockN{Otilia Pasculescu}
@@ -59,9 +57,6 @@ component, formatting, style, styling, insert
 
 \section{Background \& Related Work}
 
-
-
-
 \section{Methods}
 
 \subsection{Research Objectives}
@@ -80,9 +75,9 @@ performs better the logistic regression model.
 To investigate this hypothesis, we define the following objectives:
 
 \textbf{O1:} Construct seven datasets from the Kaggle Brain Tumor data~\cite{bohajuBrainTumor}
-representing different feature subsets: tabular features only
-(all 13 features, first-order only, second-order only), image-only features,
-image + first-order features, and image + second-order features.
+representing different feature subsets: tabular-only (all 13 features, first-order only,
+second-order only), image-only features, image + first-order features,
+image + second-order features, and image + all tabular features.
 
 \textbf{O2:} Train and tune logistic regression and RBF-kernel SVM classifiers on
 each subset using scikit-learn pipelines with standardization, splitting the
@@ -209,45 +204,125 @@ The RBF SVM has two key hyperparameters:
 \subsubsection{Training Procedure and Experimental Design}
 
 For each dataset variant D1--D7, we follow the same training and evaluation
-protocol for both logistic regression and SVM models. First, we split the dataset variant into 2 where  80\% is for training and 20\% is for testing. To
-preserve the tumour / non-tumour class proportions in each split and making the project reproducible we set a seed for how the data is split:
-(\texttt{train\_test\_split(..., test\_size=0.2, stratify=y, random\_state=42)}).
+protocol for both logistic regression and SVM models. We split each dataset
+into 80\% training and 20\% testing using
+\texttt{train\_test\_split(..., test\_size=0.2, stratify=y, random\_state=42)}
+to preserve the tumour / non-tumour class proportions and ensure
+reproducibility.
 
-
-
-To stabilize optimization and make features comparable in scale, we implement
-each classifier as a scikit-learn Pipeline~\cite{pedregosa2011scikit}.For logistic regression, the pipeline uses a median imputer, a
-StandardScaler, and a LogisticRegression model with
-$\ell_1$ or $\ell_2$ regularisation.For the SVM, the pipeline uses a
-StandardScaler and an RBF-kernel SVC classifier.
-In both models, the scaler takes and operates on the full feature vector $\mathbf{x}$
-(tabular features and, when present, flattened image pixels), ensuring that
-each feature dimension has approximately zero mean and unit variance.
+To stabilise optimisation and make features comparable in scale, we implement
+each classifier as a scikit-learn pipeline~\cite{pedregosa2011scikit}. For
+logistic regression, the pipeline uses a median imputer, a
+\texttt{StandardScaler}, and a \texttt{LogisticRegression} model with
+$\ell_1$ or $\ell_2$ regularisation. For the SVM, the pipeline uses a
+\texttt{StandardScaler} and an RBF-kernel \texttt{SVC} classifier. In both
+models, the scaler operates on the full feature vector $\mathbf{x}$
+(tabular features and, when present, flattened image pixels), so that each
+feature dimension has approximately zero mean and unit variance.
 
 Hyperparameters are tuned on the training set using stratified
 $k$-fold cross-validation with $k=3$, shuffling, and a fixed
-\texttt{random\_state} for reproducible splits. For logistic regression,
-the grid search explores different regularization strengths $C$, penalties
-($\ell_1$ vs.\ $\ell_2$), and compatible solvers such as (\texttt{liblinear},
-\texttt{lbfgs}, \texttt{saga}). 
+\texttt{random\_state}. For logistic regression, the grid search explores
+regularisation strengths $C$, penalties ($\ell_1$ vs.\ $\ell_2$), and
+compatible solvers (\texttt{liblinear}, \texttt{lbfgs}, \texttt{saga}). For
+the SVM, the grid search varies the regularisation parameter $C$ and the RBF
+kernel width $\gamma$ over a small logarithmic grid, with the kernel type
+fixed to RBF.
 
-For the SVM, the grid search varies the
-regularization parameter $C$ and the RBF kernel width $\gamma$ over a
-small logarithmic grid, where the kernel type is fixed to RBF. 
-
-In both models, we select the hyperparameter combination that maximizes mean
-cross-validation accuracy on the training data. After hyperparameter selection, the best model is retrained on the full training set and evaluated once on the held-out test set. For every model (logistic vs.\ SVM) and dataset D1--D7, we report test accuracy and
-macro-averaged F1-score, to compare performance across feature subsets and classifiers.
+In both models, we select the hyperparameter combination that maximises mean
+cross-validation accuracy on the training data, retrain the best model on the
+full training set, and evaluate it once on the held-out test set. For every
+model (logistic vs.\ SVM) and dataset D1--D7, we report test accuracy and
+macro-averaged F1-score to compare performance across feature subsets and
+classifiers.
 
 
 \subsubsection{Evaluation Metrics}
+For a given model (logistic regression or RBF SVM), we train and tune
+hyperparameters and then evaluate performance using three quantities:
+
+\begin{enumerate}
+    \item Mean cross-validated accuracy on the training split
+          (used only for hyperparameter selection),
+    \item Overall accuracy on the held-out test set,
+    \item Macro-averaged F1-score on the held-out test set.
+\end{enumerate}
+
+To select hyperparameters, we use mean cross-validated accuracy: for each
+hyperparameter configuration we run $k$-fold cross-validation on the training
+data and compute the average accuracy over the $k$ train/validation splits.
+This provides a more stable estimate of generalisation than a single
+train/validation split and helps reduce overfitting of hyperparameters.
+
+After choosing the best hyperparameters, we retrain the model on the full
+training split and evaluate it once on the held-out test set. On this test
+set we report overall accuracy and macro-averaged F1-score to compare how
+well each model performs across the different datasets.
+
+We evaluate test performance by comparing the predicted label $\hat{y}$ with
+the true label $y$ for every MRI slice. We treat the tumour class as positive
+($y=1$) and the no-tumour class as negative ($y=0$), and define:
+
+\begin{itemize}
+    \item $\mathrm{TP}$ (true positives): slices where $y=1$ and $\hat{y}=1$
+          (tumour correctly predicted),
+    \item $\mathrm{TN}$ (true negatives): slices where $y=0$ and $\hat{y}=0$
+          (no tumour correctly predicted),
+    \item $\mathrm{FP}$ (false positives): slices where $y=0$ but $\hat{y}=1$
+          (model predicts a tumour where there is none),
+    \item $\mathrm{FN}$ (false negatives): slices where $y=1$ but $\hat{y}=0$
+          (model misses a true tumour).
+\end{itemize}
+
+The overall \emph{accuracy} is the fraction of correct predictions:
+\[
+\text{Accuracy}
+= \frac{\mathrm{TP} + \mathrm{TN}}
+       {\mathrm{TP} + \mathrm{TN} + \mathrm{FP} + \mathrm{FN}}.
+\]
+
+For each class $c \in \{\text{tumour}, \text{no-tumour}\}$ we compute
+precision, recall, and F1-score. For the positive (tumour) class these are
+\[
+\text{Precision}_+ =
+\frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FP}},
+\qquad
+\text{Recall}_+ =
+\frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}},
+\]
+\[
+\text{F1}_+ = 2 \cdot
+\frac{\text{Precision}_+ \cdot \text{Recall}_+}
+     {\text{Precision}_+ + \text{Recall}_+}.
+\]
+Analogous quantities $\text{Precision}_-$, $\text{Recall}_-$, and
+$\text{F1}_-$ are defined for the no-tumour class. The macro-averaged
+F1-score reported in our experiments corresponds to scikit-learn’s
+\texttt{f1\_score(y\_test, y\_pred, average="macro")}, which simply computes
+\[
+\text{F1}_{\text{macro}} = \tfrac{1}{2} \big( \text{F1}_+ + \text{F1}_- \big),
+\]
+the unweighted mean of the two class-wise F1-scores.
 
 
 \subsubsection{Threats to Validity and Rationale}
 
+Our study has several limitations that affect how broadly the results can be interpreted.  
+First, all experiments use only a single Kaggle dataset~\cite{bohajuBrainTumor} with precomputed radiomic features and 2D slices. How that data was computed and what was used are not fully documented, so performance estimations in this paper may not be able generalize to other scanners, institutions, or clinical populations.
 
+Second, we work at the slice level and do not have patient identifiers. If multiple
+MRI slices come from the same patient appear in both the training and test splits, this may
+inflate reported accuracy and F1-scores because the model effectively sees very
+similar images during training and testing. Since, we there is no provided documentation to verify whether a given MRI slice has a tumor or not, we simply trust that the provided labels are true.
 
+Third, our models are restricted to logistic regression and RBF-kernel SVMs with
+relatively small hyperparameter grids. More complex architectures (e.g., CNNs) or
+richer hyperparameter searches could change the absolute performance and possibly the
+relative ranking of feature configurations. In addition, resizing MRIs to $64\times64$
+and flattening them into vectors may discard fine-grained spatial information.
 
+Despite these limitations, our design is appropriate for O1–O3 because it lets us compare
+the various feature subsets we have defined above and compare logistic regression versus SVM models. We are able to apply an 80/20 stratified split with cross-validated model selection, and two classifiers provide a clear test of our hypothesis, although the resulting metrics should not be viewed as definitive clinical performance.
 
 \section{Results}
 
