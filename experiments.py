@@ -1,30 +1,55 @@
 """
 experiments.py
 
-Run cross-validated hyperparameter search and evaluation on Brain_Tumor.csv.
 
-- Loads Brain_Tumor.csv
-- Cleans infinities / NaNs
-- Splits into train/test
-- Uses StratifiedKFold + GridSearchCV to find best hyperparameters
-- Reports CV performance and test performance (accuracy, precision, recall, F1, ROC AUC)
-- Plots and saves ROC curve (roc_curve.png) for the test set
-- Plots and saves Precision–Recall curve (pr_curve.png) for the test set
-- Prints feature importance based on logistic regression coefficients
+Datasets (all aligned over the same N = 3762 samples):
+
+D1: First-order only (tabular)
+    Features: Mean, Variance, Standard Deviation, Skewness, Kurtosis
+
+D2: Second-order only (tabular)
+    Features: Contrast, Energy, ASM, Entropy, Homogeneity,
+              Dissimilarity, Correlation, Coarseness
+
+D3: All tabular features
+    First-order + second-order (13 total)
+
+D4: Image only
+    64x64 grayscale MRI → flattened vector of length 4096
+
+D5: Image + first-order
+    Concatenate D4 pixels with D1 tabular features
+
+D6: Image + second-order
+    Concatenate D4 pixels with D2 tabular features
+
+D7: Image + all tabular
+    Concatenate D4 pixels with D3 tabular features
+
+Model: Logistic Regression (with StandardScaler in a Pipeline)
+- Hyperparameters tuned via GridSearchCV on the training set
+- Scoring = accuracy (matches methodology text)
+- Results summarized via test accuracy and macro-F1.
+
 """
 
-import warnings
-warnings.filterwarnings("ignore")
+from __future__ import annotations
+
+import os
+import random
+from pathlib import Path
+from typing import List, Tuple, Dict
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from PIL import Image
+
 from sklearn.model_selection import (
     train_test_split,
     StratifiedKFold,
     GridSearchCV,
-    cross_val_score,
 )
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -34,7 +59,6 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     f1_score,
-    roc_auc_score,
     confusion_matrix,
     classification_report,
     roc_curve,
@@ -45,14 +69,38 @@ from sklearn.metrics import (
 # CONFIG
 # ---------------------------------------------------------------------
 
-CSV_PATH = "Brain_Tumor.csv"   
-TARGET_COL = "Class"           
+CSV_PATH = "Brain_Tumor.csv"
+IMAGES_DIR = "images"
+TARGET_COL = "Class"
+IMAGE_COL = "Image"
+
 RANDOM_STATE = 42
 METRIC_DIGITS = 4
+IMAGE_SIZE = (64, 64)  
+IMAGE_FEATURES_PATH = f"cache_image_features_{IMAGE_SIZE[0]}x{IMAGE_SIZE[1]}.npy"
+
+FIRST_ORDER_COLS = [
+    "Mean",
+    "Variance",
+    "Standard Deviation",
+    "Skewness",
+    "Kurtosis",
+]
+
+SECOND_ORDER_COLS = [
+    "Contrast",
+    "Energy",
+    "ASM",
+    "Entropy",
+    "Homogeneity",
+    "Dissimilarity",
+    "Correlation",
+    "Coarseness",
+]
 
 
 # ---------------------------------------------------------------------
-# SMALL PRINT HELPERS
+# PRINT HELPERS
 # ---------------------------------------------------------------------
 
 def print_section(title: str, char: str = "="):
@@ -69,298 +117,517 @@ def print_subsection(title: str):
 
 
 # ---------------------------------------------------------------------
-# DATA LOADING & PREPROCESSING
+# DATA LOADING & TABULAR PREPROCESSING
 # ---------------------------------------------------------------------
 
-def load_and_clean_data(csv_path: str, target_col: str):
-    """Load Brain_Tumor.csv and return clean numeric X, y."""
-    df = pd.read_csv(csv_path)
-    print_section(f"DATA LOADING: {csv_path}", "=")
-    print(f"Raw shape: {df.shape}")
-
-    if target_col not in df.columns:
+def load_base_dataframe() -> pd.DataFrame:
+    """Load Brain_Tumor.csv and sanity check required columns."""
+    if not os.path.exists(CSV_PATH):
+        raise FileNotFoundError(
+            f"CSV '{CSV_PATH}' not found. Put Brain_Tumor.csv in the same folder "
+            f"as experiments.py (currently: {os.getcwd()})."
+        )
+    df = pd.read_csv(CSV_PATH)
+    if TARGET_COL not in df.columns:
         raise KeyError(
-            f"Target column '{target_col}' not found in CSV. "
+            f"Target column '{TARGET_COL}' not found in CSV. "
             f"Available columns: {list(df.columns)}"
         )
+    if IMAGE_COL not in df.columns:
+        raise KeyError(
+            f"Image column '{IMAGE_COL}' not found in CSV. "
+            f"Available columns: {list(df.columns)}"
+        )
+    return df
 
-    # Separate features and target
-    y = df[target_col]
-    X = df.drop(columns=[target_col])
 
-    # Keep only numeric columns for features
+def preprocess_tabular(
+    df: pd.DataFrame,
+) -> Tuple[pd.DataFrame, pd.Series, List[str], pd.DataFrame]:
+    """
+    Clean and extract tabular features.
+
+    - Drop target and image columns from X.
+    - Keep only numeric feature columns.
+    - Replace +/-inf with NaN and median-impute per numeric column.
+    - Drop rows where the target is NaN.
+
+    Returns:
+      X_tab       : cleaned numeric features (DataFrame)
+      y           : labels (Series)
+      feat_names  : list of feature names
+      df_clean    : df filtered to rows where y is not NaN,
+                    indices aligned with X_tab and y
+    """
+    df_clean = df.copy()
+
+    y = df_clean[TARGET_COL]
+    X = df_clean.drop(columns=[TARGET_COL, IMAGE_COL])
+
     numeric_cols = X.select_dtypes(include=[np.number]).columns.tolist()
     X = X[numeric_cols]
 
-    print_subsection("Feature Columns (numeric only)")
-    print(f"{len(numeric_cols)} features used:")
-    print(numeric_cols)
-
-    # Replace inf / -inf with NaN then impute
+    # Replace inf with NaN, then fill with column medians
     X = X.replace([np.inf, -np.inf], np.nan)
-    num_inf = X.isna().sum().sum()
-    if num_inf > 0:
-        print(f"\n[INFO] Replacing {num_inf} inf / NaN values with column medians.")
-
     X = X.fillna(X.median(numeric_only=True))
 
-    # Drop rows where target is missing
-    mask_valid = y.notna()
-    X = X.loc[mask_valid].reset_index(drop=True)
-    y = y.loc[mask_valid].reset_index(drop=True)
+    mask = y.notna()
+    X = X.loc[mask].reset_index(drop=True)
+    y = y.loc[mask].reset_index(drop=True)
+    df_clean = df_clean.loc[mask].reset_index(drop=True)
 
-    print_subsection("Cleaned Data Summary")
+    return X, y, numeric_cols, df_clean
+
+
+def summarize_tabular(X: pd.DataFrame, y: pd.Series, feature_names: List[str]):
+    """Print a human-readable summary of the tabular dataset."""
+    print_section("TABULAR-ONLY DATASET (from Brain_Tumor.csv)", "=")
+
+    print_subsection("Numeric feature columns")
+    print(f"{len(feature_names)} features used:")
+    print(feature_names)
+
+    print_subsection("Cleaned tabular data summary")
     print(f"X shape: {X.shape}")
     print(f"y shape: {y.shape}")
     print("\nClass distribution:")
     print(y.value_counts())
 
-    return X, y
+
+# ---------------------------------------------------------------------
+# IMAGE LOADING & FEATURE MATRIX
+# ---------------------------------------------------------------------
+
+def load_and_preprocess_image(path: str, size=(64, 64)) -> np.ndarray:
+    """Load an image, convert to grayscale, resize, flatten to 1D float32 array."""
+    img = Image.open(path).convert("L")  # grayscale
+    img = img.resize(size)
+    arr = np.asarray(img, dtype=np.float32) / 255.0  # normalize 0–1
+    return arr.flatten()
+
+
+def resolve_image_path(raw_name: str) -> str | None:
+    """
+    Given something like 'Image1' from the CSV, try to find the actual file
+    in IMAGES_DIR. We try common extensions (.jpg, .jpeg, .png).
+    """
+    base = os.path.basename(str(raw_name)).strip()
+    root, ext = os.path.splitext(base)
+    candidates = []
+    if ext:
+        candidates.append(base)
+    else:
+        for e in [".jpg", ".jpeg", ".png"]:
+            candidates.append(root + e)
+
+    for filename in candidates:
+        full = os.path.join(IMAGES_DIR, filename)
+        if os.path.exists(full):
+            return full
+    return None
+
+
+def build_image_features_matrix(df_clean: pd.DataFrame) -> np.ndarray:
+    """
+    Build an (N, D_img) matrix of flattened image pixels corresponding
+    row-by-row to df_clean.
+
+    """
+    expected_n = len(df_clean)
+    expected_d = IMAGE_SIZE[0] * IMAGE_SIZE[1]
+
+    if os.path.exists(IMAGE_FEATURES_PATH):
+        print(f"[INFO] Loading cached image features from {IMAGE_FEATURES_PATH}")
+        X_img = np.load(IMAGE_FEATURES_PATH)
+        if X_img.shape == (expected_n, expected_d):
+            return X_img
+        print(
+            f"[WARN] Cached features shape {X_img.shape} does not match "
+            f"expected {(expected_n, expected_d)}. Recomputing..."
+        )
+
+    print("[INFO] Computing image features (once) ...")
+    if not os.path.isdir(IMAGES_DIR):
+        raise FileNotFoundError(
+            f"Images folder '{IMAGES_DIR}' not found. "
+            "Put the 'images' folder next to experiments.py."
+        )
+
+    image_names = df_clean[IMAGE_COL].astype(str).reset_index(drop=True)
+    feats: List[np.ndarray] = []
+
+    for raw_name in image_names:
+        img_path = resolve_image_path(raw_name)
+        if img_path is None:
+            raise RuntimeError(
+                f"Could not find a file for image ID '{raw_name}' in '{IMAGES_DIR}'. "
+                "Make sure files are named like 'Image1.jpg', 'Image2.jpg', ..."
+            )
+        feats.append(load_and_preprocess_image(img_path, size=IMAGE_SIZE))
+
+    X_img = np.vstack(feats).astype(np.float32)
+    if X_img.shape != (expected_n, expected_d):
+        raise RuntimeError(
+            f"Built image feature matrix with shape {X_img.shape}, "
+            f"expected {(expected_n, expected_d)}."
+        )
+
+    np.save(IMAGE_FEATURES_PATH, X_img)
+    print(f"[INFO] Saved image features to {IMAGE_FEATURES_PATH}")
+    return X_img
 
 
 # ---------------------------------------------------------------------
-# MODEL TRAINING & HYPERPARAMETER SEARCH
+# BUILD ALL 7 DATASETS (D1–D7)
 # ---------------------------------------------------------------------
 
-def build_pipeline():
-    """Return a base pipeline: StandardScaler + LogisticRegression."""
-    pipe = Pipeline(
+def build_all_datasets(
+    X_tab_np: np.ndarray,
+    feat_names: List[str],
+    X_img: np.ndarray,
+    y_np: np.ndarray,
+) -> Dict[str, Dict[str, object]]:
+    """
+    Construct the 7 datasets D1–D7 as defined in the methodology.
+
+    Returns a dict mapping dataset ID -> dict with:
+      - 'X': feature matrix
+      - 'y': labels
+      - 'pretty': human-readable description
+    """
+    name_to_idx = {name: i for i, name in enumerate(feat_names)}
+
+    try:
+        idx_first = [name_to_idx[c] for c in FIRST_ORDER_COLS]
+        idx_second = [name_to_idx[c] for c in SECOND_ORDER_COLS]
+    except KeyError as e:
+        raise KeyError(
+            f"Required feature column {str(e)} not found in feat_names. "
+            f"Got feat_names={feat_names}"
+        )
+
+    X_first = X_tab_np[:, idx_first]
+    X_second = X_tab_np[:, idx_second]
+    X_all_tab = X_tab_np  # 13 features
+
+    datasets = {
+        "D1_first_order": {
+            "X": X_first,
+            "y": y_np,
+            "pretty": "D1 – Tabular: First-order only",
+        },
+        "D2_second_order": {
+            "X": X_second,
+            "y": y_np,
+            "pretty": "D2 – Tabular: Second-order only",
+        },
+        "D3_all_tabular": {
+            "X": X_all_tab,
+            "y": y_np,
+            "pretty": "D3 – Tabular: All 13 features",
+        },
+        "D4_image_only": {
+            "X": X_img,
+            "y": y_np,
+            "pretty": "D4 – Image only (64x64 grayscale)",
+        },
+        "D5_image_plus_first": {
+            "X": np.concatenate([X_img, X_first], axis=1),
+            "y": y_np,
+            "pretty": "D5 – Image + first-order features",
+        },
+        "D6_image_plus_second": {
+            "X": np.concatenate([X_img, X_second], axis=1),
+            "y": y_np,
+            "pretty": "D6 – Image + second-order features",
+        },
+        "D7_image_plus_all": {
+            "X": np.concatenate([X_img, X_all_tab], axis=1),
+            "y": y_np,
+            "pretty": "D7 – Image + all tabular features",
+        },
+    }
+
+    print_subsection("Dataset shapes (D1–D7)")
+    for key, info in datasets.items():
+        Xk: np.ndarray = info["X"]  # type: ignore
+        print(f"{key}: X shape = {Xk.shape}, y shape = {info['y'].shape}")
+
+    return datasets
+
+
+# ---------------------------------------------------------------------
+# MODEL & GRID SEARCH (LOGISTIC REGRESSION)
+# ---------------------------------------------------------------------
+
+def build_pipeline() -> Pipeline:
+    """Logistic regression pipeline with standardization."""
+    return Pipeline(
         [
             ("scaler", StandardScaler()),
-            ("clf", LogisticRegression(max_iter=2000, random_state=RANDOM_STATE)),
+            ("clf", LogisticRegression(max_iter=5000, random_state=RANDOM_STATE)),
         ]
     )
-    return pipe
 
 
-def get_param_grid():
-    """Hyperparameter grid for LogisticRegression."""
-    param_grid = [
-        {
-            "clf__penalty": ["l1"],
-            "clf__solver": ["liblinear", "saga"],
-            "clf__C": [0.01, 0.1, 1, 10, 100],
-        },
-        {
-            "clf__penalty": ["l2"],
-            "clf__solver": ["lbfgs", "saga"],
-            "clf__C": [0.01, 0.1, 1, 10, 100],
-        },
-    ]
-    return param_grid
-
-
-def run_hyperparameter_search(X_train, y_train):
+def get_param_grid(full: bool) -> List[Dict[str, object]]:
     """
+    Return the hyperparameter grid.
 
+    full = True  -> larger grid (L1/L2, multiple solvers), used for D1–D3.
+    full = False -> lighter grid (L2 + lbfgs only), used for image-based D4–D7.
     """
-    print_section("MODEL SELECTION: Logistic Regression")
+    Cs = [0.01, 0.1, 1, 10]
+
+    if full:
+        # Explore penalties and solvers more thoroughly on lower-dimensional tabular subsets.
+        return [
+            {"clf__penalty": ["l2"], "clf__solver": ["lbfgs"],     "clf__C": Cs},
+            {"clf__penalty": ["l2"], "clf__solver": ["liblinear"], "clf__C": Cs},
+            {"clf__penalty": ["l1"], "clf__solver": ["liblinear"], "clf__C": Cs},
+            {"clf__penalty": ["l1"], "clf__solver": ["saga"],      "clf__C": Cs},
+        ]
+    else:
+        # High-dimensional image-based subsets: keep it computationally manageable.
+        return [
+            {"clf__penalty": ["l2"], "clf__solver": ["lbfgs"], "clf__C": Cs},
+        ]
+
+
+def run_hyperparameter_search(ds_key: str, X_train, y_train, label: str):
+    print_section(f"MODEL SELECTION – {label}", "=")
 
     pipe = build_pipeline()
-    param_grid = get_param_grid()
-    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
 
-    grid = GridSearchCV(
+    # Use full grid for tabular-only; lighter grid for image-based datasets
+    tabular_only_keys = {"D1_first_order", "D2_second_order", "D3_all_tabular"}
+    use_full_grid = ds_key in tabular_only_keys
+
+    param_grid = get_param_grid(full=use_full_grid)
+    cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=RANDOM_STATE)
+
+    gs = GridSearchCV(
         estimator=pipe,
         param_grid=param_grid,
+        scoring="accuracy",        
         cv=cv,
-        scoring="roc_auc",
         n_jobs=-1,
-        verbose=0,   # keep output clean
+        verbose=1,
     )
+    gs.fit(X_train, y_train)
 
-    grid.fit(X_train, y_train)
+    best_model = gs.best_estimator_
+    best_params = gs.best_params_
+    best_acc = gs.best_score_
 
-    best_model = grid.best_estimator_
-    best_params = grid.best_params_
-    best_roc_auc = grid.best_score_
+    print_subsection("Best hyperparameters")
+    print(best_params)
+    print(f"Best CV Accuracy: {best_acc:.{METRIC_DIGITS}f}")
 
-    print_subsection("Best Hyperparameters (GridSearchCV, scoring = ROC AUC)")
-    for k, v in best_params.items():
-        print(f"{k}: {v}")
-    print(f"\nBest mean CV ROC AUC: {best_roc_auc:.{METRIC_DIGITS}f}")
-
-    # Additional CV with best model for other metrics
-    print_subsection("Cross-Validation Performance (Best Model)")
-    for metric in ["accuracy", "f1", "roc_auc"]:
-        scores = cross_val_score(
-            best_model,
-            X_train,
-            y_train,
-            cv=cv,
-            scoring=metric,
-            n_jobs=-1,
-        )
-        mean = scores.mean()
-        spread = 2 * scores.std()
-        print(
-            f"{metric.upper():10s}: "
-            f"{mean:.{METRIC_DIGITS}f} ± {spread:.{METRIC_DIGITS}f} (mean ± 2*std)"
-        )
-
-    return best_model, best_params, best_roc_auc
+    return best_model, best_params, best_acc
 
 
 # ---------------------------------------------------------------------
-# FEATURE IMPORTANCE
+# EVALUATION & PLOTS
 # ---------------------------------------------------------------------
 
-def print_feature_importance(model, feature_names):
-    """
-    Print sorted feature importances based on logistic regression coefficients.
-    Positive coef -> increases log-odds of Class=1 (tumor),
-    Negative coef -> increases log-odds of Class=0 (no tumor).
-    """
-    clf = model.named_steps["clf"]
-    coefs = clf.coef_[0]  # binary classification: one row
-
-    importance = np.abs(coefs)
-    sorted_idx = np.argsort(importance)[::-1]
-
-    rows = []
-    for idx in sorted_idx:
-        fname = feature_names[idx]
-        c = coefs[idx]
-        effect = "↑ tumor probability" if c > 0 else "↓ tumor probability" if c < 0 else "no effect"
-        rows.append(
-            {
-                "Feature": fname,
-                "Coefficient": c,
-                "|Coefficient|": abs(c),
-                "Effect (sign)": effect,
-            }
-        )
-
-    df_imp = pd.DataFrame(rows)
-
-    print_section("FEATURE IMPORTANCE (Logistic Regression Coefficients)", "=")
-    print(df_imp.to_string(index=False, float_format=lambda x: f"{x:.6f}"))
-
-
-# ---------------------------------------------------------------------
-# FINAL TEST EVALUATION + ROC & PR PLOTS
-# ---------------------------------------------------------------------
-
-def evaluate_on_test(model, X_test, y_test):
-    """Evaluate the chosen model on the held-out test set and plot ROC + PR curves."""
-    print_section("TEST SET EVALUATION", "=")
+def evaluate_on_test(model, X_test, y_test, file_label: str, pretty_label: str):
+    print_section(f"TEST SET EVALUATION – {pretty_label}", "=")
 
     y_pred = model.predict(X_test)
 
-    y_proba = None
     if hasattr(model, "predict_proba"):
         y_proba = model.predict_proba(X_test)[:, 1]
-    elif hasattr(model, "decision_function"):
-        y_proba = model.decision_function(X_test)
+    else:
+        decision = model.decision_function(X_test)
+        y_proba = (decision - decision.min()) / (decision.max() - decision.min() + 1e-12)
 
     acc = accuracy_score(y_test, y_pred)
     prec = precision_score(y_test, y_pred, zero_division=0)
     rec = recall_score(y_test, y_pred, zero_division=0)
-    f1 = f1_score(y_test, y_pred, zero_division=0)
-    roc = roc_auc_score(y_test, y_proba) if y_proba is not None else None
+    f1_bin = f1_score(y_test, y_pred, zero_division=0)
+    f1_macro = f1_score(y_test, y_pred, average="macro", zero_division=0)
 
-    print_subsection("Confusion Matrix")
-    print(confusion_matrix(y_test, y_pred))
+    print_subsection("Scalar metrics")
+    print(f"Accuracy   : {acc:.{METRIC_DIGITS}f}")
+    print(f"Precision  : {prec:.{METRIC_DIGITS}f}")
+    print(f"Recall     : {rec:.{METRIC_DIGITS}f}")
+    print(f"F1 (binary): {f1_bin:.{METRIC_DIGITS}f}")
+    print(f"F1 (macro) : {f1_macro:.{METRIC_DIGITS}f}")
 
-    print_subsection("Classification Report")
-    print(classification_report(y_test, y_pred, digits=4))
+    cm = confusion_matrix(y_test, y_pred)
+    print_subsection("Confusion matrix")
+    print(cm)
 
-    print_subsection("Scalar Metrics")
-    print(f"Accuracy : {acc:.{METRIC_DIGITS}f}")
-    print(f"Precision: {prec:.{METRIC_DIGITS}f}")
-    print(f"Recall   : {rec:.{METRIC_DIGITS}f}")
-    print(f"F1-score : {f1:.{METRIC_DIGITS}f}")
-    if roc is not None:
-        print(f"ROC AUC  : {roc:.{METRIC_DIGITS}f}")
-    else:
-        print("ROC AUC  : (not available, model has no proba/score output)")
+    print_subsection("Classification report")
+    print(classification_report(y_test, y_pred, digits=METRIC_DIGITS))
 
-    # ---- ROC curve plotting ----
-    if y_proba is not None:
-        fpr, tpr, _ = roc_curve(y_test, y_proba)
+    out_dir = Path("results")
+    out_dir.mkdir(exist_ok=True)
 
-        plt.figure()
-        plt.plot(fpr, tpr, label=f"ROC curve (AUC = {roc:.{METRIC_DIGITS}f})")
-        plt.plot([0, 1], [0, 1], linestyle="--", label="Random")
-        plt.xlabel("False Positive Rate")
-        plt.ylabel("True Positive Rate")
-        plt.title("ROC Curve - Brain Tumor Classifier")
-        plt.legend(loc="lower right")
-        plt.grid(True)
-        plt.tight_layout()
-        plt.savefig("roc_curve.png", dpi=300)
-        plt.close()
-        print("\n[PLOT] Saved ROC curve to roc_curve.png")
+    # Confusion matrix heatmap
+    plt.figure(figsize=(5, 4))
+    plt.imshow(cm, interpolation="nearest", cmap="Blues")
+    plt.title(f"Confusion Matrix – {pretty_label}")
+    plt.colorbar()
+    tick_marks = np.arange(2)
+    plt.xticks(tick_marks, ["0", "1"])
+    plt.yticks(tick_marks, ["0", "1"])
 
-        # ---- Precision–Recall curve plotting ----
-        precision_vals, recall_vals, _ = precision_recall_curve(y_test, y_proba)
-        plt.figure()
-        plt.plot(recall_vals, precision_vals, label="Precision–Recall curve")
-        plt.xlabel("Recall")
-        plt.ylabel("Precision")
-        plt.title("Precision–Recall Curve - Brain Tumor Classifier")
-        plt.legend(loc="lower left")
-        plt.grid(True)
-        plt.tight_layout()
-        plt.savefig("pr_curve.png", dpi=300)
-        plt.close()
-        print("[PLOT] Saved Precision–Recall curve to pr_curve.png")
+    thresh = cm.max() / 2.0
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            plt.text(
+                j,
+                i,
+                format(cm[i, j], "d"),
+                horizontalalignment="center",
+                color="white" if cm[i, j] > thresh else "black",
+            )
+
+    plt.ylabel("True label")
+    plt.xlabel("Predicted label")
+    plt.tight_layout()
+    cm_path = out_dir / f"cm_{file_label}.png"
+    plt.savefig(cm_path, dpi=200)
+    plt.close()
+
+    fpr, tpr, _ = roc_curve(y_test, y_proba)
+    precision_curve, recall_curve, _ = precision_recall_curve(y_test, y_proba)
+
+    # ROC curve (no AUC printed)
+    plt.figure(figsize=(5, 4))
+    plt.plot(fpr, tpr, label="ROC curve")
+    plt.plot([0, 1], [0, 1], "k--")
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title(f"ROC Curve – {pretty_label}")
+    plt.legend(loc="lower right")
+    plt.tight_layout()
+    roc_path = out_dir / f"roc_{file_label}.png"
+    plt.savefig(roc_path, dpi=200)
+    plt.close()
+
+    # Precision-Recall curve
+    plt.figure(figsize=(5, 4))
+    plt.plot(recall_curve, precision_curve)
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel("Recall")
+    plt.ylabel("Precision")
+    plt.title(f"Precision-Recall Curve – {pretty_label}")
+    plt.tight_layout()
+    pr_path = out_dir / f"pr_{file_label}.png"
+    plt.savefig(pr_path, dpi=200)
+    plt.close()
+
+    print_subsection("Saved plots")
+    print(f"Confusion matrix:      {cm_path}")
+    print(f"ROC curve:             {roc_path}")
+    print(f"Precision-Recall curve:{pr_path}")
 
     return {
         "accuracy": acc,
         "precision": prec,
         "recall": rec,
-        "f1": f1,
-        "roc_auc": roc,
+        "f1_binary": f1_bin,
+        "f1_macro": f1_macro,
     }
 
 
 # ---------------------------------------------------------------------
-# MAIN
+# MAIN EXPERIMENT LOGIC (LOGISTIC REGRESSION ON D1–D7)
 # ---------------------------------------------------------------------
 
 def main():
-    # 1. Load data
-    X, y = load_and_clean_data(CSV_PATH, TARGET_COL)
-    feature_names = X.columns.tolist()
+    # Hard determinism for numpy & Python RNG
+    random.seed(RANDOM_STATE)
+    np.random.seed(RANDOM_STATE)
 
-    # 2. Train/Test split
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
+    df_raw = load_base_dataframe()
+
+    # 1) Preprocess tabular once and summarize
+    X_tab_df, y, feat_names, df_clean = preprocess_tabular(df_raw)
+    summarize_tabular(X_tab_df, y, feat_names)
+
+    # Convert to NumPy
+    X_tab_np = X_tab_df.to_numpy(dtype=np.float32)
+    y_np = y.to_numpy()
+
+    # 2) Build image feature matrix (cached)
+    X_img = build_image_features_matrix(df_clean)
+    print_subsection("Image feature matrix summary")
+    print(f"X_img shape: {X_img.shape}")
+
+    # 3) Construct all 7 datasets
+    datasets = build_all_datasets(X_tab_np, feat_names, X_img, y_np)
+
+    # 4) Shared train/test split on indices (same for all D1–D7)
+    n = len(y_np)
+    indices = np.arange(n)
+    train_idx, test_idx = train_test_split(
+        indices,
         test_size=0.2,
-        stratify=y,
+        stratify=y_np,
         random_state=RANDOM_STATE,
     )
 
-    print_section("TRAIN/TEST SPLIT", "=")
-    print(f"X_train: {X_train.shape}, X_test: {X_test.shape}")
-    print(f"y_train: {y_train.shape}, y_test: {y_test.shape}")
+    print_section("TRAIN/TEST SPLIT – Shared indices for all D1–D7", "=")
+    print(f"Total samples: {n}")
+    print(f"Train size   : {len(train_idx)}")
+    print(f"Test size    : {len(test_idx)}")
 
-    # 3. Hyperparameter search with cross-validation
-    best_model, best_params, best_cv_score = run_hyperparameter_search(
-        X_train, y_train
-    )
+    # 5) Run logistic regression on each dataset
+    all_results = []
 
-    # 4. Final test evaluation + ROC & PR curves
-    test_metrics = evaluate_on_test(best_model, X_test, y_test)
+    for ds_key, info in datasets.items():
+        X_full: np.ndarray = info["X"]  # type: ignore
+        y_full: np.ndarray = info["y"]  # type: ignore
+        pretty = info["pretty"]         # type: ignore
 
-    # 5. Feature importance
-    print_feature_importance(best_model, feature_names)
+        print_section(f"==== DATASET {ds_key} / {pretty} ====", "=")
+        X_train = X_full[train_idx]
+        X_test = X_full[test_idx]
+        y_train = y_full[train_idx]
+        y_test = y_full[test_idx]
 
-    # 6. Final summary
-    print_section("FINAL SUMMARY", "=")
-    print("Best hyperparameters:")
-    for k, v in best_params.items():
-        print(f"  {k}: {v}")
-    print(f"\nBest CV ROC AUC : {best_cv_score:.{METRIC_DIGITS}f}")
-    print("Test metrics:")
-    for k, v in test_metrics.items():
-        if v is None:
-            print(f"  {k:10s}: (n/a)")
-        else:
-            print(f"  {k:10s}: {v:.{METRIC_DIGITS}f}")
-    print()
+        model, params, best_acc = run_hyperparameter_search(ds_key, X_train, y_train, pretty)
+        metrics = evaluate_on_test(
+            model,
+            X_test,
+            y_test,
+            file_label=ds_key,
+            pretty_label=pretty,
+        )
+
+        row = {
+            "Dataset": ds_key,
+            "Description": pretty,
+            "Test Accuracy": metrics["accuracy"],
+            "Test Macro F1": metrics["f1_macro"],
+        }
+        all_results.append(row)
+
+    # 6) Final summary table over all D1–D7 for logistic regression
+    print_section("FINAL COMPARISON – Logistic Regression over D1–D7", "=")
+    df_comp = pd.DataFrame(all_results)
+    df_comp = df_comp.sort_values(by="Test Accuracy", ascending=False)
+
+    out_dir = Path("results")
+    out_dir.mkdir(exist_ok=True)
+    summary_path = out_dir / "logreg_D1_D7_summary.csv"
+    df_comp.to_csv(summary_path, index=False)
+
+    with pd.option_context("display.float_format", lambda x: f"{x:.4f}"):
+        print(df_comp.to_string(index=False))
+
+    # Highlight the best model (by accuracy; you can switch to Macro F1 if you want)
+    best_row = df_comp.iloc[0]
+    print_subsection("Best logistic regression model (by Test Accuracy)")
+    print(best_row.to_string())
+    print(f"\nSummary saved to: {summary_path}")
 
 
 if __name__ == "__main__":
