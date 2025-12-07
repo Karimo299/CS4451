@@ -45,8 +45,8 @@ from sklearn.metrics import (
 # CONFIG
 # ---------------------------------------------------------------------
 
-CSV_PATH = "Brain_Tumor.csv"   # Make sure this file is in the same folder
-TARGET_COL = "Class"           # Your label column
+CSV_PATH = "Brain_Tumor.csv"   
+TARGET_COL = "Class"           
 RANDOM_STATE = 42
 METRIC_DIGITS = 4
 
