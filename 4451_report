@@ -5,6 +5,7 @@
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithmic}
 \usepackage{graphicx}
+\usepackage{url}  
 \usepackage{textcomp}
 \usepackage{xcolor}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
@@ -23,11 +24,11 @@ should not be used}
 London, Ontario \\
 opascule@uwo.ca}
 \and
-\IEEEauthorblockN{2\textsuperscript{nd} Given Name Surname}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-\textit{name of organization (of Aff.)}\\
-City, Country \\
-email address or ORCID}
+\IEEEauthorblockN{2\textsuperscript{nd} Christopher Betancur}
+\IEEEauthorblockA{\textit{Department of Computer Science} \\
+\textit{Western University}\\
+London, Ontario \\
+cbetancu@uwo.ca}
 \and
 \IEEEauthorblockN{3\textsuperscript{rd} Given Name Surname}
 \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
@@ -40,26 +41,13 @@ email address or ORCID}
 \textit{name of organization (of Aff.)}\\
 City, Country \\
 email address or ORCID}
-\and
-\IEEEauthorblockN{5\textsuperscript{th} Given Name Surname}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-\textit{name of organization (of Aff.)}\\
-City, Country \\
-email address or ORCID}
-\and
-\IEEEauthorblockN{6\textsuperscript{th} Given Name Surname}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-\textit{name of organization (of Aff.)}\\
-City, Country \\
-email address or ORCID}
 }
 
 \maketitle
 
+
 \begin{abstract}
-This document is a model and instructions for \LaTeX.
-This and the IEEEtran.cls file define the components of your paper [title, text, heads, etc.]. *CRITICAL: Do Not Use Symbols, Special Characters, Footnotes, 
-or Math in Paper Title or Abstract.
+
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -67,222 +55,250 @@ component, formatting, style, styling, insert
 \end{IEEEkeywords}
 
 \section{Introduction}
-This document is a model and instructions for \LaTeX.
-Please observe the conference page limits. 
 
-\section{Ease of Use}
 
-\subsection{Maintaining the Integrity of the Specifications}
+\section{Background \& Related Work}
 
-The IEEEtran class file is used to format your paper and style the text. All margins, 
-column widths, line spaces, and text fonts are prescribed; please do not 
-alter them. You may note peculiarities. For example, the head margin
-measures proportionately more than is customary. This measurement 
-and others are deliberate, using specifications that anticipate your paper 
-as one part of the entire proceedings, and not as an independent document. 
-Please do not revise any of the current designations.
 
-\section{Prepare Your Paper Before Styling}
-Before you begin to format your paper, first write and save the content as a 
-separate text file. Complete all content and organizational editing before 
-formatting. Please note sections \ref{AA}--\ref{SCM} below for more information on 
-proofreading, spelling and grammar.
 
-Keep your text and graphic files separate until after the text has been 
-formatted and styled. Do not number text heads---{\LaTeX} will do that 
-for you.
 
-\subsection{Abbreviations and Acronyms}\label{AA}
-Define abbreviations and acronyms the first time they are used in the text, 
-even after they have been defined in the abstract. Abbreviations such as 
-IEEE, SI, MKS, CGS, ac, dc, and rms do not have to be defined. Do not use 
-abbreviations in the title or heads unless they are unavoidable.
+\section{Methods}
 
-\subsection{Units}
+\subsection{Research Objectives}
+
+
+In this paper we test the following hypothesis:
+\begin{quote}
+Across the feature subsets we consider, models that combine
+image-based MRI features with tabular features achieve higher 
+performance in classifying tumour vs non-tumour MRI scans than models
+that use a single feature type (tabular-only or image-only), and
+for any given feature subset, an RBF-kernel support vector machine (SVM)
+performs better the logistic regression model.
+\end{quote}
+
+To investigate this hypothesis, we define the following objectives:
+
+\textbf{O1:} Construct seven datasets from the Kaggle Brain Tumor data~\cite{bohajuBrainTumor}
+representing different feature subsets: tabular features only
+(all 13 features, first-order only, second-order only), image-only features,
+image + first-order features, and image + second-order features.
+
+\textbf{O2:} Train and tune logistic regression and RBF-kernel SVM classifiers on
+each subset using scikit-learn pipelines with standardization, splitting the
+data into training and test sets and optimizing hyperparameters via
+cross-validation with grid search.
+
+\textbf{O3:} Compare classification performance across feature subsets and models
+using held-out test accuracy and macro-averaged F1-score, and analyze which
+feature subset and which model (logistic vs SVM) perform best.
+
+
+\subsection{Research Methodology}
+
+\subsubsection{Dataset and Preprocessing}
+
+We use the Brain Tumor dataset from Kaggle~\cite{bohajuBrainTumor}, which provides
+a CSV file with the precomputed radiomic features and corresponding MRI slice
+filenames that those features belong to, along with the raw brain MRI images themselves. 
+
+The raw CSV contains $N = 3762$ samples. We check for and drop any rows with
+features taking infinite values, but in this dataset no rows are removed. All feature vectors in the dataset have one to one correspondence to a 2D MRI slice along with a binary label \texttt{Class} where label 1 means that the MRI slice contains a tumor and 0 means the MRI slice does not contain a tumor. For each row in the CSV, it includes an \texttt{Image} identifier (to link row of features to image), the class (tumor or no tumor), and 13 tabular features where the features themselves are divided into two types: 
+\paragraph{First-order features.}
 \begin{itemize}
-\item Use either SI (MKS) or CGS as primary units. (SI units are encouraged.) English units may be used as secondary units (in parentheses). An exception would be the use of English units as identifiers in trade, such as ``3.5-inch disk drive''.
-\item Avoid combining SI and CGS units, such as current in amperes and magnetic field in oersteds. This often leads to confusion because equations do not balance dimensionally. If you must use mixed units, clearly state the units for each quantity that you use in an equation.
-\item Do not mix complete spellings and abbreviations of units: ``Wb/m\textsuperscript{2}'' or ``webers per square meter'', not ``webers/m\textsuperscript{2}''. Spell out units when they appear in text: ``. . . a few henries'', not ``. . . a few H''.
-\item Use a zero before decimal points: ``0.25'', not ``.25''. Use ``cm\textsuperscript{3}'', not ``cc''.)
+    \item Mean
+    \item Variance
+    \item Standard deviation
+    \item Skewness
+    \item Kurtosis
 \end{itemize}
 
-\subsection{Equations}
-Number equations consecutively. To make your 
-equations more compact, you may use the solidus (~/~), the exp function, or 
-appropriate exponents. Italicize Roman symbols for quantities and variables, 
-but not Greek symbols. Use a long dash rather than a hyphen for a minus 
-sign. Punctuate equations with commas or periods when they are part of a 
-sentence, as in:
-\begin{equation}
-a+b=\gamma\label{eq}
-\end{equation}
-
-Be sure that the 
-symbols in your equation have been defined before or immediately following 
-the equation. Use ``\eqref{eq}'', not ``Eq.~\eqref{eq}'' or ``equation \eqref{eq}'', except at 
-the beginning of a sentence: ``Equation \eqref{eq} is . . .''
-
-\subsection{\LaTeX-Specific Advice}
-
-Please use ``soft'' (e.g., \verb|\eqref{Eq}|) cross references instead
-of ``hard'' references (e.g., \verb|(1)|). That will make it possible
-to combine sections, add equations, or change the order of figures or
-citations without having to go through the file line by line.
-
-Please don't use the \verb|{eqnarray}| equation environment. Use
-\verb|{align}| or \verb|{IEEEeqnarray}| instead. The \verb|{eqnarray}|
-environment leaves unsightly spaces around relation symbols.
-
-Please note that the \verb|{subequations}| environment in {\LaTeX}
-will increment the main equation counter even when there are no
-equation numbers displayed. If you forget that, you might write an
-article in which the equation numbers skip from (17) to (20), causing
-the copy editors to wonder if you've discovered a new method of
-counting.
-
-{\BibTeX} does not work by magic. It doesn't get the bibliographic
-data from thin air but from .bib files. If you use {\BibTeX} to produce a
-bibliography you must send the .bib files. 
-
-{\LaTeX} can't read your mind. If you assign the same label to a
-subsubsection and a table, you might find that Table I has been cross
-referenced as Table IV-B3. 
-
-{\LaTeX} does not have precognitive abilities. If you put a
-\verb|\label| command before the command that updates the counter it's
-supposed to be using, the label will pick up the last counter to be
-cross referenced instead. In particular, a \verb|\label| command
-should not go before the caption of a figure or a table.
-
-Do not use \verb|\nonumber| inside the \verb|{array}| environment. It
-will not stop equation numbers inside \verb|{array}| (there won't be
-any anyway) and it might stop a wanted equation number in the
-surrounding equation.
-
-\subsection{Some Common Mistakes}\label{SCM}
+\paragraph{Second-order (texture) features.}
 \begin{itemize}
-\item The word ``data'' is plural, not singular.
-\item The subscript for the permeability of vacuum $\mu_{0}$, and other common scientific constants, is zero with subscript formatting, not a lowercase letter ``o''.
-\item In American English, commas, semicolons, periods, question and exclamation marks are located within quotation marks only when a complete thought or name is cited, such as a title or full quotation. When quotation marks are used, instead of a bold or italic typeface, to highlight a word or phrase, punctuation should appear outside of the quotation marks. A parenthetical phrase or statement at the end of a sentence is punctuated outside of the closing parenthesis (like this). (A parenthetical sentence is punctuated within the parentheses.)
-\item A graph within a graph is an ``inset'', not an ``insert''. The word alternatively is preferred to the word ``alternately'' (unless you really mean something that alternates).
-\item Do not use the word ``essentially'' to mean ``approximately'' or ``effectively''.
-\item In your paper title, if the words ``that uses'' can accurately replace the word ``using'', capitalize the ``u''; if not, keep using lower-cased.
-\item Be aware of the different meanings of the homophones ``affect'' and ``effect'', ``complement'' and ``compliment'', ``discreet'' and ``discrete'', ``principal'' and ``principle''.
-\item Do not confuse ``imply'' and ``infer''.
-\item The prefix ``non'' is not a word; it should be joined to the word it modifies, usually without a hyphen.
-\item There is no period after the ``et'' in the Latin abbreviation ``et al.''.
-\item The abbreviation ``i.e.'' means ``that is'', and the abbreviation ``e.g.'' means ``for example''.
+    \item Contrast
+    \item Energy
+    \item ASM (angular second moment)
+    \item Entropy
+    \item Homogeneity
+    \item Dissimilarity
+    \item Correlation
+    \item Coarseness
 \end{itemize}
-An excellent style manual for science writers is \cite{b7}.
 
-\subsection{Authors and Affiliations}
-\textbf{The class file is designed for, but not limited to, six authors.} A 
-minimum of one author is required for all conference articles. Author names 
-should be listed starting from left to right and then moving down to the 
-next line. This is the author sequence that will be used in future citations 
-and by indexing services. Names should not be listed in columns nor group by 
-affiliation. Please keep your affiliations as succinct as possible (for 
-example, do not differentiate among departments of the same organization).
 
-\subsection{Identify the Headings}
-Headings, or heads, are organizational devices that guide the reader through 
-your paper. There are two types: component heads and text heads.
+So we now construct seven aligned datasets from the same $N$ samples:
 
-Component heads identify the different components of your paper and are not 
-topically subordinate to each other. Examples include Acknowledgments and 
-References and, for these, the correct style to use is ``Heading 5''. Use 
-``figure caption'' for your Figure captions, and ``table head'' for your 
-table title. Run-in heads, such as ``Abstract'', will require you to apply a 
-style (in this case, italic) in addition to the style provided by the drop 
-down menu to differentiate the head from the text.
+\begin{enumerate}
+    \item \textbf{D1: First-order only (tabular)} \\
+    Utilize the 5 first-order intensity statistics:
+    Mean, Variance, Standard Deviation, Skewness, Kurtosis.
 
-Text heads organize the topics on a relational, hierarchical basis. For 
-example, the paper title is the primary text head because all subsequent 
-material relates and elaborates on this one topic. If there are two or more 
-sub-topics, the next level head (uppercase Roman numerals) should be used 
-and, conversely, if there are not at least two sub-topics, then no subheads 
-should be introduced.
+    \item \textbf{D2: Second-order only (tabular)} \\
+    Utilize the 8 second-order texture features:
+    Contrast, Energy, ASM, Entropy, Homogeneity, Dissimilarity, Correlation, Coarseness.
 
-\subsection{Figures and Tables}
-\paragraph{Positioning Figures and Tables} Place figures and tables at the top and 
-bottom of columns. Avoid placing them in the middle of columns. Large 
-figures and tables may span across both columns. Figure captions should be 
-below the figures; table heads should appear above the tables. Insert 
-figures and tables after they are cited in the text. Use the abbreviation 
-``Fig.~\ref{fig}'', even at the beginning of a sentence.
+    \item \textbf{D3: All tabular features} \\
+    Utilize all 13 tabular features (first-order + second-order).
 
-\begin{table}[htbp]
-\caption{Table Type Styles}
-\begin{center}
-\begin{tabular}{|c|c|c|c|}
-\hline
-\textbf{Table}&\multicolumn{3}{|c|}{\textbf{Table Column Head}} \\
-\cline{2-4} 
-\textbf{Head} & \textbf{\textit{Table column subhead}}& \textbf{\textit{Subhead}}& \textbf{\textit{Subhead}} \\
-\hline
-copy& More table copy$^{\mathrm{a}}$& &  \\
-\hline
-\multicolumn{4}{l}{$^{\mathrm{a}}$Sample of a Table footnote.}
-\end{tabular}
-\label{tab1}
-\end{center}
-\end{table}
+    \item \textbf{D4: Image only} \\
+    Utilize only the grayscale MRI slice, resized to $64\times64$ and normalized.
 
-\begin{figure}[htbp]
-\centerline{\includegraphics{fig1.png}}
-\caption{Example of a figure caption.}
-\label{fig}
-\end{figure}
+    \item \textbf{D5: Image + first-order} \\
+    Concatenate image pixels with the 5 first-order features.
 
-Figure Labels: Use 8 point Times New Roman for Figure labels. Use words 
-rather than symbols or abbreviations when writing Figure axis labels to 
-avoid confusing the reader. As an example, write the quantity 
-``Magnetization'', or ``Magnetization, M'', not just ``M''. If including 
-units in the label, present them within parentheses. Do not label axes only 
-with units. In the example, write ``Magnetization (A/m)'' or ``Magnetization 
-\{A[m(1)]\}'', not just ``A/m''. Do not label axes with a ratio of 
-quantities and units. For example, write ``Temperature (K)'', not 
-``Temperature/K''.
+    \item \textbf{D6: Image + second-order} \\
+    Concatenate image pixels with the 8 second-order features.
 
-\section*{Acknowledgment}
+    \item \textbf{D7: Image + all tabular features} \\
+    Concatenate image pixels with all 13 tabular features.
+\end{enumerate}
 
-The preferred spelling of the word ``acknowledgment'' in America is without 
-an ``e'' after the ``g''. Avoid the stilted expression ``one of us (R. B. 
-G.) thanks $\ldots$''. Instead, try ``R. B. G. thanks$\ldots$''. Put sponsor 
-acknowledgments in the unnumbered footnote on the first page.
+Each MRI slice is loaded in grayscale, resized to a resolution of $64\times64$,
+and then normalized to the range $[0, 1]$. By reducing the size of the original MRI slice from $240\times 240$ to $64\times 64$ we reduce the dimensionality (the number of features we pass into the model) while still retaining the overall structural information needed for tumor classification, following prior work that successfully used small resized MRIs for CNN-based brain tumor classification~\cite{abiwinanda2019, aitamou2022}. In MRI analysis, it is common to normalize the intensities so that MRI machine settings have comparable brightness and contrast before we fit any models~\cite{shinohara2014}.
 
-\section*{References}
+Let $\mathbf{x}_{\text{img}} \in \mathbb{R}^{4096}$ be the flattened representation
+(of length $64\times64$) of the compressed and normalized grayscale MRI slice in pixels and $\mathbf{x}_{\text{tab}} \in \mathbb{R}^{13}$ represent the full tabular feature vector for a given MRI slice. 
 
-Please number citations consecutively within brackets \cite{b1}. The 
-sentence punctuation follows the bracket \cite{b2}. Refer simply to the reference 
-number, as in \cite{b3}---do not use ``Ref. \cite{b3}'' or ``reference \cite{b3}'' except at 
-the beginning of a sentence: ``Reference \cite{b3} was the first $\ldots$''
+For each dataset variant defined above, we construct a single feature vector $\mathbf{x}$ from
+these components as follows:
+\begin{itemize}
+    \item tabular-only variants (D1--D3): $\mathbf{x} \subseteq \mathbf{x}_{\text{tab}}$ where $\mathbf{x}$ can contain all tabular features or a subset.
+    \item image-only variant (D4): $\mathbf{x} = \mathbf{x}_{\text{img}}$.
+    \item Combined variants (D5--D7):
+          \[
+              \mathbf{x} =
+              \begin{bmatrix}
+                  \mathbf{x}_{\text{img}} \\
+                  \mathbf{x}'
+              \end{bmatrix},
+          \]
+          where $\mathbf{x}'$ as a subvector of
+      $\mathbf{x}_{\text{tab}}$ containing either the 5 first-order features,
+      the 8 second-order features, or all 13 tabular features.
+\end{itemize}
 
-Number footnotes separately in superscripts. Place the actual footnote at 
-the bottom of the column in which it was cited. Do not put footnotes in the 
-abstract or reference list. Use letters for table footnotes.
+The goal is to learn a function (model) that, given a feature vector $\mathbf{x}$,
+outputs a binary label (a standard supervised binary classification task):
+\[
+  f : \mathcal{X} \to \{0, 1\},
+\]
+where $\mathcal{X}$ denotes the space of all feature vectors constructed as above.
 
-Unless there are six authors or more give all authors' names; do not use 
-``et al.''. Papers that have not been published, even if they have been 
-submitted for publication, should be cited as ``unpublished'' \cite{b4}. Papers 
-that have been accepted for publication should be cited as ``in press'' \cite{b5}. 
-Capitalize only the first word in a paper title, except for proper nouns and 
-element symbols.
 
-For papers published in translation journals, please give the English 
-citation first, followed by the original foreign-language citation \cite{b6}.
+
+
+\subsubsection{Logistic Regression Model}
+
+\subsubsection{Support Vector Machine Model}
+
+SVMs are margin-based classifiers that finds the decision boundary which maximizes the distance between classes ~\cite{cortes1995support}. This model can represent non-linear decision boundaries by implicitly mapping the input features into a higher-dimensional
+space through the kernel function. In this paper, we utilize and SVM with a radial basis function (RBF) kernel~\cite{cortes1995support} as our main model,
+implemented using the machine learning library scikit-learn~\cite{pedregosa2011scikit}.
+
+For each of the seven datasets D1--D7 we have defined above each with a unique feature configuration, we then train a separate RBF SVM model on the corresponding feature vectors $\mathbf{x}$. To avoid features with large values dominating the kernel, we standardize
+all input features to zero mean and unit variance using a \texttt{StandardScaler} inside a scikit-learn \texttt{Pipeline}.
+
+The RBF SVM has two key hyperparameters:
+\begin{enumerate}
+    \item Regularization parameter $C$ which controls the trade-off between having a wider margin with more training errors versus fitting the training data more strictly with fewer margin violations.
+    \item Kernel width parameter $\gamma$ controls the influence of a single training point.
+\end{enumerate}
+
+
+
+\subsubsection{Training Procedure and Experimental Design}
+
+For each dataset variant D1--D7, we follow the same training and evaluation
+protocol for both logistic regression and SVM models. First, we split the dataset variant into 2 where  80\% is for training and 20\% is for testing. To
+preserve the tumour / non-tumour class proportions in each split and making the project reproducible we set a seed for how the data is split:
+(\texttt{train\_test\_split(..., test\_size=0.2, stratify=y, random\_state=42)}).
+
+
+
+To stabilize optimization and make features comparable in scale, we implement
+each classifier as a scikit-learn Pipeline~\cite{pedregosa2011scikit}.For logistic regression, the pipeline uses a median imputer, a
+StandardScaler, and a LogisticRegression model with
+$\ell_1$ or $\ell_2$ regularisation.For the SVM, the pipeline uses a
+StandardScaler and an RBF-kernel SVC classifier.
+In both models, the scaler takes and operates on the full feature vector $\mathbf{x}$
+(tabular features and, when present, flattened image pixels), ensuring that
+each feature dimension has approximately zero mean and unit variance.
+
+Hyperparameters are tuned on the training set using stratified
+$k$-fold cross-validation with $k=3$, shuffling, and a fixed
+\texttt{random\_state} for reproducible splits. For logistic regression,
+the grid search explores different regularization strengths $C$, penalties
+($\ell_1$ vs.\ $\ell_2$), and compatible solvers such as (\texttt{liblinear},
+\texttt{lbfgs}, \texttt{saga}). 
+
+For the SVM, the grid search varies the
+regularization parameter $C$ and the RBF kernel width $\gamma$ over a
+small logarithmic grid, where the kernel type is fixed to RBF. 
+
+In both models, we select the hyperparameter combination that maximizes mean
+cross-validation accuracy on the training data. After hyperparameter selection, the best model is retrained on the full training set and evaluated once on the held-out test set. For every model (logistic vs.\ SVM) and dataset D1--D7, we report test accuracy and
+macro-averaged F1-score, to compare performance across feature subsets and classifiers.
+
+
+\subsubsection{Evaluation Metrics}
+
+
+\subsubsection{Threats to Validity and Rationale}
+
+
+
+
+
+\section{Results}
+
+\section{Conclusions \& Future Work}
+
 
 \begin{thebibliography}{00}
-\bibitem{b1} G. Eason, B. Noble, and I. N. Sneddon, ``On certain integrals of Lipschitz-Hankel type involving products of Bessel functions,'' Phil. Trans. Roy. Soc. London, vol. A247, pp. 529--551, April 1955.
-\bibitem{b2} J. Clerk Maxwell, A Treatise on Electricity and Magnetism, 3rd ed., vol. 2. Oxford: Clarendon, 1892, pp.68--73.
-\bibitem{b3} I. S. Jacobs and C. P. Bean, ``Fine particles, thin films and exchange anisotropy,'' in Magnetism, vol. III, G. T. Rado and H. Suhl, Eds. New York: Academic, 1963, pp. 271--350.
-\bibitem{b4} K. Elissa, ``Title of paper if known,'' unpublished.
-\bibitem{b5} R. Nicole, ``Title of paper with only first word capitalized,'' J. Name Stand. Abbrev., in press.
-\bibitem{b6} Y. Yorozu, M. Hirano, K. Oka, and Y. Tagawa, ``Electron spectroscopy studies on magneto-optical media and plastic substrate interface,'' IEEE Transl. J. Magn. Japan, vol. 2, pp. 740--741, August 1987 [Digests 9th Annual Conf. Magnetics Japan, p. 301, 1982].
-\bibitem{b7} M. Young, The Technical Writer's Handbook. Mill Valley, CA: University Science, 1989.
+
+\bibitem{bohajuBrainTumor}
+J.~Bohaju, ``Brain Tumor,'' Kaggle, Jul. 2020, ver.~3. [Online]. Available:
+\url{https://www.kaggle.com/datasets/jakeshbohaju/brain-tumor}.
+doi: 10.34740/KAGGLE/DSV/955413. [Accessed: Dec. 6, 2025].
+
+\bibitem{abiwinanda2019}
+N.~Abiwinanda, M.~Hanif, S.~T.~Hesaputra, A.~Handayani, and T.~R.~Mengko,
+``Brain tumor classification using convolutional neural network,''
+in \emph{World Congress on Medical Physics and Biomedical Engineering 2018}.
+Singapore: Springer, 2019, pp.~183--189.
+doi: 10.1007/978-981-10-9035-6\_33.
+
+\bibitem{aitamou2022}
+M.~Ait~Amou, H.~Xia, A.~Larhmam, and M.~Alami~El~Filali,
+``A novel MRI diagnosis method for brain tumor classification based on deep learning,''
+\emph{Healthcare}, vol.~10, no.~3, p.~494, 2022.
+doi: 10.3390/healthcare10030494.
+
+\bibitem{shinohara2014}
+R.~T.~Shinohara, E.~M.~Sweeney, J.~Goldsmith, N.~Shiee, F.~J.~Mateen, P.~A.~Calabresi,
+S.~Jarso, D.~L.~Pham, D.~S.~Reich, and C.~M.~Crainiceanu,
+``Statistical normalization techniques for magnetic resonance imaging,''
+\emph{NeuroImage: Clinical}, vol.~6, pp.~9--19, 2014.
+doi: 10.1016/j.nicl.2014.08.008.
+
+
+\bibitem{cortes1995support}
+C.~Cortes and V.~Vapnik,
+``Support-vector networks,''
+\emph{Machine Learning}, vol.~20, no.~3, pp.~273--297, 1995.
+doi: 10.1007/BF00994018.
+
+\bibitem{pedregosa2011scikit}
+F.~Pedregosa, G.~Varoquaux, A.~Gramfort, V.~Michel, B.~Thirion, O.~Grisel,
+M.~Blondel, P.~Prettenhofer, R.~Weiss, V.~Dubourg, J.~Vanderplas, A.~Passos,
+D.~Cournapeau, M.~Brucher, M.~Perrot, and {\'E}.~Duchesnay,
+``Scikit-learn: Machine learning in {P}ython,''
+\emph{Journal of Machine Learning Research}, vol.~12, pp.~2825--2830, 2011.
+[Online]. Available: \url{https://www.jmlr.org/papers/v12/pedregosa11a.html}.
+
+
+
 \end{thebibliography}
 \vspace{12pt}
-\color{red}
-IEEE conference templates contain guidance text for composing and formatting conference papers. Please ensure that all template text is removed from your conference paper prior to submission to the conference. Failure to remove the template text from your paper may result in your paper not being published.
 
 \end{document}
