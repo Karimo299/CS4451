@@ -8,6 +8,7 @@
 \usepackage{url}  
 \usepackage{textcomp}
 \usepackage{xcolor}
+\usepackage{float}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
@@ -348,6 +349,173 @@ the various feature subsets we have defined above and compare logistic regressio
 
 \section{Results}
 
+\subsection{System Requirements and Architecture Outcomes}
+
+The experimental pipeline was designed with the following requirements:
+
+
+
+\textbf{Consistency across datasets:} All models must use the same aligned
+    sample ordering to allow direct dataset-to-dataset comparisons. The implementation
+    meets this requirement by constructing all feature matrices (D1–D7) from a shared
+    cleaned DataFrame and applying a single stratified train/test split.
+    
+\textbf{Scalability:} Image preprocessing is performed once and cached.
+    Subsequent runs reuse the stored feature matrix, ensuring reproducible and efficient
+    execution across experiments.
+    
+\textbf{Model robustness:} Logistic regression must remain numerically stable
+    even in high-dimensional settings (e.g., D7 with 4109 features). Our implementation
+    using the \texttt{lbfgs} and \texttt{liblinear} solvers satisfies this requirement,
+    with all models converging without numerical instability.
+    
+
+\subsection{Implementation, Testing, and Verification}
+
+During implementation, several aspects of the system were verified:
+
+\textbf{Image–tabular alignment:} Each image feature vector was correctly 
+    matched with its corresponding radiomic features. Consistency checks using sampled
+    rows confirmed correct alignment across all 3762 samples.
+    
+\textbf{Feature normalization:} Standardization was applied jointly over
+    image and tabular dimensions. Logistic regression performed substantially worse
+    without scaling, confirming the necessity of normalization for stable optimization.
+    
+\textbf{Cross-validation behavior:} Grid search using stratified 3-fold CV
+    produced consistent scores across folds, indicating reliable model behavior and
+    low sensitivity to sampling variation.
+
+
+
+\subsection{Logistic Regression Results Analysis}
+
+Logistic regression was trained and tuned independently on each dataset variant
+(D1–D7), representing different combinations of radiomic features and image-based
+features. Across all experiments, D7 (Image + All Tabular Features) achieved the best
+performance, with a test accuracy of 0.9934 and a macro F1-score of 0.9933.
+Conversely, the weakest performance was observed in D1 (First-order only) and D4
+(Image-only), both of which lack higher-level texture information that appears essential
+for robust tumor classification.
+
+Fig.~\ref{fig:logreg_barplot} summarizes the performance across D1–D7.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.48\textwidth]{logreg_D1_D7_bar_comparison.png}
+    \caption{Logistic regression test accuracy and macro F1-score across feature subsets D1–D7.
+    Performance improves as additional radiomic or image features are incorporated,
+    with the combined image + tabular feature set (D7) performing best.}
+    \label{fig:logreg_barplot}
+\end{figure}
+
+\subsection{SVM Results Analysis}
+SVM was trained and tested on each dataset variant (D1–D7), representing different combinations of radiomic features and image-based features. The best test accuracy result comes from the D3 data, with a score of 0.980, and also a very high CV score as well (0.986). The best F1 score is also from the D3 data, with a score of 0.991. Across all experiments, D3 achieved the best overall performance. The weakest performance was observed in D4 (image only) with a test accuracy of 0.896, along with a low CV score and a low F1 score. However, the lowest F1 score was reported in D1 with a score of 0.885.
+
+Fig.~\ref{fig:logreg_barplot} summarizes the performance across D1–D7.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.48\textwidth]{logreg_D1_D7_bar_comparison.png}
+    \caption{SVM test accuracy and macro F1-score across feature subsets D1–D7.
+    Performance improves as additional radiomic or image features are incorporated,
+    with the combined image + tabular feature set (D7) performing best.}
+    \label{fig:logreg_barplot}
+\end{figure}
+
+\subsection{Tabulated Results}
+
+Tables~\ref{tab:logreg_results} and~\ref{tab:svm_results} list the cross-validated accuracy, test accuracy, and macro F1-score obtained for each dataset using logistic regression and SVM, respectively.
+
+\begin{table}[H]
+\centering
+\caption{Logistic Regression Performance Across D1--D7}
+\label{tab:logreg_results}
+\begin{tabular}{lccc}
+\hline
+\textbf{Dataset} & \textbf{CV Accuracy} & \textbf{Test Accuracy} & \textbf{Macro F1} \\
+\hline
+D1 -- First-order only        & 0.885 & 0.885 & 0.883 \\
+D2 -- Second-order only       & 0.977 & 0.984 & 0.984 \\
+D3 -- All tabular features    & 0.981 & 0.991 & 0.991 \\
+D4 -- Image only (64$\times$64)      & 0.883 & 0.888 & 0.887 \\
+D5 -- Image + first-order     & 0.955 & 0.975 & 0.975 \\
+D6 -- Image + second-order    & 0.976 & 0.985 & 0.985 \\
+D7 -- Image + all tabular     & 0.979 & 0.993 & 0.993 \\
+\hline
+\end{tabular}
+\end{table}
+
+
+\begin{table}[H]
+\centering
+\caption{SVM Performance Across D1--D7}
+\label{tab:svm_results}
+\begin{tabular}{lccc}
+\hline
+\textbf{Dataset} & \textbf{CV Accuracy} & \textbf{Test Accuracy} & \textbf{Macro F1} \\
+\hline
+D1 -- First-order only        & 0.946 & 0.944 & 0.885 \\
+D2 -- Second-order only       & 0.982 & 0.971 & 0.987 \\
+D3 -- All tabular features    & 0.986 & 0.980 & 0.991 \\
+D4 -- Image only (64$\times$64)      & 0.839 & 0.896 & 0.911 \\
+D5 -- Image + first-order     & 0.845 & 0.912 & 0.925 \\
+D6 -- Image + second-order    & 0.847 & 0.906 & 0.925 \\
+D7 -- Image + all tabular     & 0.850 & 0.919 & 0.965 \\
+\hline
+\end{tabular}
+\end{table}
+
+
+
+\subsection{Result Interpretations - logistic regression}
+
+\textbf{First-order features alone are limited (D1).} These features encode only global intensity statistics and therefore fail to capture local tumor structure.
+
+\textbf{Second-order texture features substantially improve performance (D2).}
+Texture descriptors such as contrast, entropy, and homogeneity encode spatial
+irregularities that are highly characteristic of tumor presence.
+
+\textbf{Image-only inputs perform poorly with linear models (D4).}
+Because logistic regression is a linear classifier, it cannot efficiently model
+complex spatial patterns present in raw pixel data when the image is flattened.
+
+\textbf{Combining image and tabular features yields the strongest results (D5–D7).}
+The combination provides both high-level radiomic summaries and fine-grained pixel
+cues, leading to the highest-performing model (D7).
+
+\subsection{Result Interpretations - SVM}
+
+\textbf{Tabular features are strong:} All tabular datasets outperform image datasets in test accuracy, which could indicate that SVM performs better with tabular data than it does with image data with this specific model and dataset. D3 (all tabular features) is also the best performer, which strengthens the indication that tabular features outperform non-tabular features in this evaluation.
+
+\textbf{Image data performs poorly: }D4 (image only) is observed as the weakest performer in test accuracy, which indicates that images alone are not strong. When tabular data is added, performance rises. This shows us that tabular data strengthens the model.
+
+\textbf{First-order features are not enough: }D1 is also observed as a weak performer and it only takes into account first-order features. This is an indication that first-order features are not enough to detect brain tumors and the data itself may not descriptive enough for the model to be accurate in this assessment.
+
+\subsection{SHOULD WE ADD THIS: Comparison of Logistic Regression and SVM}
+
+
+\subsection{Novelty of Our Approach}
+
+Two aspects of novelty characterize our methodology:
+
+\begin{enumerate}
+    \item \textbf{A unified evaluation of seven radiomic–image feature subsets.}
+    While prior work often focuses solely on image-based deep learning models, our 
+    experiments demonstrate that radiomic features alone can achieve near-perfect 
+    performance with both linear regression and SVM implementation.
+
+    \item \textbf{Fusion of high-dimensional pixel data with engineered features.}
+    Few studies evaluate logistic regression on a combined 4096-pixel + 13-feature
+    input space. Our results show that with proper standardization and regularization,
+    logistic regression can remain stable and highly accurate even in this setting.
+\end{enumerate}
+
+Overall, the experiments confirm that radiomic features—
+particularly texture descriptors—carry strong predictive signals for tumor
+classification.
+
+
 \section{Conclusions \& Future Work}
 
 
@@ -399,6 +567,5 @@ D.~Cournapeau, M.~Brucher, M.~Perrot, and {\'E}.~Duchesnay,
 \vspace{12pt}
 
 \end{document}
-
 
 
