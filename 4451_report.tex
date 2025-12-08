@@ -5,6 +5,7 @@
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithmic}
 \usepackage{graphicx}
+\usepackage{placeins} 
 \usepackage{url}  
 \usepackage{textcomp}
 \usepackage{xcolor}
@@ -16,29 +17,46 @@
 \title{Brain Tumor Classification from MRI Radiomic and Image Features\\}
 
 
-\author{\IEEEauthorblockN{Otilia Pasculescu}
-\IEEEauthorblockA{\textit{Department of Computer Science} \\
-\textit{Western University}\\
-London, Ontario \\
-opascule@uwo.ca}
-\and
-\IEEEauthorblockN{2\textsuperscript{nd} Christopher Betancur}
-\IEEEauthorblockA{\textit{Department of Computer Science} \\
-\textit{Western University}\\
-London, Ontario \\
-cbetancu@uwo.ca}
-\and
-\IEEEauthorblockN{3\textsuperscript{rd} Given Name Surname}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-\textit{name of organization (of Aff.)}\\
-City, Country \\
-email address or ORCID}
-\and
-\IEEEauthorblockN{4\textsuperscript{th} Given Name Surname}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-\textit{name of organization (of Aff.)}\\
-City, Country \\
-email address or ORCID}
+\author{
+\begin{minipage}{0.24\textwidth}
+\centering
+\footnotesize
+\textbf{Ahmad Alashoury}\\
+Department of Computer Science\\
+Western University\\
+London, Ontario\\
+aalashou@uwo.ca
+\end{minipage}
+\hfill
+\begin{minipage}{0.24\textwidth}
+\centering
+\footnotesize
+\textbf{Christopher Betancur}\\
+Department of Computer Science\\
+Western University\\
+London, Ontario\\
+cbetancu@uwo.ca
+\end{minipage}
+\hfill
+\begin{minipage}{0.24\textwidth}
+\centering
+\footnotesize
+\textbf{Otilia Pasculescu}\\
+Department of Computer Science\\
+Western University\\
+London, Ontario\\
+opascule@uwo.ca
+\end{minipage}
+\hfill
+\begin{minipage}{0.24\textwidth}
+\centering
+\footnotesize
+\textbf{Kareem}\\
+Department of Computer Science\\
+Western University\\
+London, Ontario\\
+email@uwo.ca
+\end{minipage}
 }
 
 \maketitle
@@ -431,14 +449,17 @@ Tables~\ref{tab:logreg_results} and~\ref{tab:svm_results} list the cross-validat
 \centering
 \caption{Logistic Regression Performance Across D1--D7}
 \label{tab:logreg_results}
-\begin{tabular}{lccc}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{@{}lccc@{}}
 \hline
 \textbf{Dataset} & \textbf{CV Accuracy} & \textbf{Test Accuracy} & \textbf{Macro F1} \\
 \hline
 D1 -- First-order only        & 0.885 & 0.885 & 0.883 \\
 D2 -- Second-order only       & 0.977 & 0.984 & 0.984 \\
 D3 -- All tabular features    & 0.981 & 0.991 & 0.991 \\
-D4 -- Image only (64$\times$64)      & 0.883 & 0.888 & 0.887 \\
+D4 -- Image only (64$\times$64) & 0.883 & 0.888 & 0.887 \\
 D5 -- Image + first-order     & 0.955 & 0.975 & 0.975 \\
 D6 -- Image + second-order    & 0.976 & 0.985 & 0.985 \\
 D7 -- Image + all tabular     & 0.979 & 0.993 & 0.993 \\
@@ -447,18 +468,22 @@ D7 -- Image + all tabular     & 0.979 & 0.993 & 0.993 \\
 \end{table}
 
 
+
 \begin{table}[H]
 \centering
 \caption{SVM Performance Across D1--D7}
 \label{tab:svm_results}
-\begin{tabular}{lccc}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{@{}lccc@{}}
 \hline
 \textbf{Dataset} & \textbf{CV Accuracy} & \textbf{Test Accuracy} & \textbf{Macro F1} \\
 \hline
 D1 -- First-order only        & 0.946 & 0.944 & 0.885 \\
 D2 -- Second-order only       & 0.982 & 0.971 & 0.987 \\
 D3 -- All tabular features    & 0.986 & 0.980 & 0.991 \\
-D4 -- Image only (64$\times$64)      & 0.839 & 0.896 & 0.911 \\
+D4 -- Image only (64$\times$64) & 0.839 & 0.896 & 0.911 \\
 D5 -- Image + first-order     & 0.845 & 0.912 & 0.925 \\
 D6 -- Image + second-order    & 0.847 & 0.906 & 0.925 \\
 D7 -- Image + all tabular     & 0.850 & 0.919 & 0.965 \\
@@ -492,7 +517,46 @@ cues, leading to the highest-performing model (D7).
 
 \textbf{First-order features are not enough: }D1 is also observed as a weak performer and it only takes into account first-order features. This is an indication that first-order features are not enough to detect brain tumors and the data itself may not descriptive enough for the model to be accurate in this assessment.
 
-\subsection{SHOULD WE ADD THIS: Comparison of Logistic Regression and SVM}
+\subsection{Comparison of Logistic Regression and SVM}
+
+Table~\ref{tab:lr_svm_comparison} directly compares logistic regression and
+RBF SVM on each dataset D1--D7 using test accuracy and macro F1-score.
+
+Logistic regression generally achieves higher test accuracy on the
+tabular-only and fused image+tabular datasets (D2, D3, D5--D7), while SVM
+is competitive or slightly better on some macro F1-scores (e.g., D3 and D7)
+and on the image-only configuration (D4). In particular, the best overall
+test accuracy is obtained by logistic regression on D7 (image + all tabular
+features), whereas the best SVM configuration is D3 (all tabular features).
+This means that our original hypothesis that an RBF SVM would consistently
+outperform logistic regression on every feature subset is \emph{not}
+supported by the empirical results: for many radiomic-rich settings, a
+well-regularized linear model is at least as strong as the non-linear SVM.
+
+\begin{table}[H]
+\centering
+\caption{Comparison of Logistic Regression and SVM Across D1--D7}
+\label{tab:lr_svm_comparison}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{@{}lcccc@{}}
+\hline
+\textbf{Dataset} & \textbf{LR Acc} & \textbf{LR Macro F1} &
+\textbf{SVM Acc} & \textbf{SVM Macro F1} \\
+\hline
+D1 -- First-order only        & 0.885 & 0.883 & 0.944 & 0.885 \\
+D2 -- Second-order only       & 0.984 & 0.984 & 0.971 & 0.987 \\
+D3 -- All tabular features    & 0.991 & 0.991 & 0.980 & 0.991 \\
+D4 -- Image only (64$\times$64) & 0.888 & 0.887 & 0.896 & 0.911 \\
+D5 -- Image + first-order     & 0.975 & 0.975 & 0.912 & 0.925 \\
+D6 -- Image + second-order    & 0.985 & 0.985 & 0.906 & 0.925 \\
+D7 -- Image + all tabular     & 0.993 & 0.993 & 0.919 & 0.965 \\
+\hline
+\end{tabular}
+\end{table}
+
+\FloatBarrier   % keeps TABLE III before the Novelty subsection
 
 
 \subsection{Novelty of Our Approach}
@@ -517,6 +581,61 @@ classification.
 
 
 \section{Conclusions \& Future Work}
+
+This project set out to investigate three objectives (O1--O3): (1) construct
+seven aligned datasets combining radiomic and image features (D1--D7),
+(2) train and tune logistic regression and RBF SVM models on each subset
+using a common pipeline, and (3) compare performance across feature
+configurations and models using held-out test accuracy and macro F1-score.
+
+With respect to O1, we successfully built seven consistent feature
+configurations from the Kaggle Brain Tumor dataset, ranging from simple
+first-order radiomic features (D1) to a fused representation of
+64$\times$64 image pixels and all 13 tabular features (D7). For O2, both
+logistic regression and SVM were implemented in standardized
+scikit-learn pipelines with stratified train/test splits and 3-fold
+cross-validated grid search. The resulting models converged reliably on all
+datasets, including the high-dimensional fused representations.
+
+Regarding O3 and our hypothesis, the results show that combining image and
+tabular features does indeed produce the strongest models overall: for both
+classifiers, the best-performing configurations involve either all tabular
+features (D3) or image+tabular fusion (D5--D7). However, the second part of
+our hypothesis, that an RBF SVM would uniformly outperform logistic
+regression on each feature subset, is not supported. Logistic regression
+matches or exceeds SVM in test accuracy on most tabular-rich datasets,
+including the best overall configuration D7, while SVM is only clearly
+superior for the image-only case and some macro F1-scores. A key conclusion
+is that carefully regularized linear models remain highly competitive for
+radiomic-based brain tumor classification, especially when informative
+texture features are available.
+
+Several avenues for future work arise from this study. First, we worked at
+the slice level without patient identifiers; a natural extension is to
+reconstruct patient-level splits to avoid potential information leakage and
+to evaluate per-patient rather than per-slice performance. Second, our
+models are limited to logistic regression and RBF SVMs; exploring modern
+deep learning architectures (e.g., CNNs for the images plus MLP heads for
+tabular features) could reveal whether more complex models still gain
+significant accuracy beyond the radiomic baselines. Third, our
+hyperparameter grids were deliberately small; more extensive searches,
+calibration analysis, and class-imbalance handling (e.g., focal losses or
+cost-sensitive learning) could further refine model performance. Finally,
+explainability methods such as feature importance analysis or SHAP values
+could be applied to better understand which radiomic descriptors drive
+classification decisions.
+
+From an implementation perspective, this project also produced several
+practical lessons. We found that strict alignment between image files and
+CSV rows is critical; even small indexing mistakes can silently corrupt
+supervised labels. Normalization and standardization are indispensable for
+both logistic regression and SVM, particularly when fusing pixel values and
+radiomic features in a single high-dimensional vector. Caching preprocessed
+image features made repeated experimentation feasible and highlights the
+importance of engineering the pipeline, not just tuning the model. More
+broadly, the work reinforced that simple, well-validated baselines are
+essential: they provide strong performance, expose bugs early, and offer a
+clear reference point for any future, more complex models to beat.
 
 
 \begin{thebibliography}{00}
@@ -567,5 +686,3 @@ D.~Cournapeau, M.~Brucher, M.~Perrot, and {\'E}.~Duchesnay,
 \vspace{12pt}
 
 \end{document}
-
-
