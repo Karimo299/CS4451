@@ -398,29 +398,29 @@ Conversely, the weakest performance was observed in D1 (First-order only) and D4
 (Image-only), both of which lack higher-level texture information that appears essential
 for robust tumor classification.
 
-Fig.~\ref{fig:logreg_barplot} summarizes the performance across D1–D7.
+Fig.~\ref{fig:lr_bar_graph} summarizes the performance across D1–D7.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.48\textwidth]{logreg_D1_D7_bar_comparison.png}
+    \includegraphics[width=0.48\textwidth]{lr_bar_graph.png}
     \caption{Logistic regression test accuracy and macro F1-score across feature subsets D1–D7.
     Performance improves as additional radiomic or image features are incorporated,
     with the combined image + tabular feature set (D7) performing best.}
-    \label{fig:logreg_barplot}
+    \label{fig:lr_bar_graph}
 \end{figure}
 
 \subsection{SVM Results Analysis}
 SVM was trained and tested on each dataset variant (D1–D7), representing different combinations of radiomic features and image-based features. The best test accuracy result comes from the D3 data, with a score of 0.980, and also a very high CV score as well (0.986). The best F1 score is also from the D3 data, with a score of 0.991. Across all experiments, D3 achieved the best overall performance. The weakest performance was observed in D4 (image only) with a test accuracy of 0.896, along with a low CV score and a low F1 score. However, the lowest F1 score was reported in D1 with a score of 0.885.
 
-Fig.~\ref{fig:logreg_barplot} summarizes the performance across D1–D7.
+Fig.~\ref{fig:svm_bar_plot.png} summarizes the performance across D1–D7.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.48\textwidth]{logreg_D1_D7_bar_comparison.png}
+    \includegraphics[width=0.48\textwidth]{svm_bar_graph.png}
     \caption{SVM test accuracy and macro F1-score across feature subsets D1–D7.
     Performance improves as additional radiomic or image features are incorporated,
     with the combined image + tabular feature set (D7) performing best.}
-    \label{fig:logreg_barplot}
+    \label{fig:svm_bar_plot}
 \end{figure}
 
 \subsection{Tabulated Results}
