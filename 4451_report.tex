@@ -447,14 +447,14 @@ Fig.~\ref{fig:lr_bar_graph} summarizes the performance across D1–D7.
 \subsection{SVM Results Analysis}
 SVM was trained and tested on each dataset variant (D1–D7), with each dataset representing different combinations of radiomic features and image-based features. The best test accuracy result comes from the D3 data, with a score of 0.980, and also a very high CV score as well (0.986). The best F1 score is also from the D3 data, with a score of 0.991. Across all experiments, D3 achieved the best overall performance. The weakest performance was observed in D4 (image only) with a test accuracy of 0.896, along with a low CV score and a low F1 score. However, the lowest F1 score was reported in D1 with a score of 0.885.
 
-Fig.~\ref{fig:svm_bar_plot.png} summarizes the performance across D1–D7.
+Fig.~\ref{fig:svm_bar_graph} summarizes the performance across D1–D7.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.48\textwidth]{svm_bar_graph.png}
     \caption{SVM test accuracy and macro F1-score across feature subsets D1–D7.
     Performance is best when focusing solely on tabular data (D3), and decreases once images are introduced.}
-    \label{fig:svm_bar_plot}
+    \label{fig:svm_bar_graph}
 \end{figure}
 
 \subsection{Tabulated Results}
@@ -595,7 +595,7 @@ These are the main aspects of novelty that characterize our methodology:
 
     \item \textbf{A well-regularized linear model can be competitive with a non-linear SVM.}
     Our results suggest that a linear model can be superior to  and outperform a non linear model. 
-
+\end{enumerate}
 
 
 \section{Conclusions \& Future Work}
@@ -724,52 +724,60 @@ Sep.~26, 2022. Available: \url{https://jsmc.pk/index.php/jsmc/article/view/697}.
 % FOR SVM
 
 \bibitem{yun2019}
-Yun, J., Park, J. E., Lee, H., Ham, S., Kim, N., & Kim, H. S. (2019). Radiomic features and multilayer perceptron network classifier: a robust MRI classification strategy for distinguishing glioblastoma from primary central nervous system lymphoma. Scientific Reports, 9(1), Article 5746. https://doi.org/10.1038/s41598-019-42276-w
+J.~Yun, J.~E.~Park, H.~Lee, S.~Ham, N.~Kim, and H.~S.~Kim,
+``Radiomic features and multilayer perceptron network classifier: A robust MRI classification strategy for distinguishing glioblastoma from primary central nervous system lymphoma,''
+\emph{Scientific Reports}, vol.~9, Art.~no.~5746, 2019.
+doi: 10.1038/s41598-019-42276-w.
 
 \bibitem{wu2019}
-Wu Y, Jiang JH, Chen L, Lu JY, Ge JJ, Liu FT, Yu JT, Lin W, Zuo CT, Wang J. Use of radiomic features and support vector machine to distinguish Parkinson's disease cases from normal controls. Ann Transl Med. 2019 Dec;7(23):773. doi: 10.21037/atm.2019.11.26. PMID: 32042789; PMCID: PMC6990013.
+Y.~Wu, J.~H.~Jiang, L.~Chen, J.~Y.~Lu, J.~J.~Ge, F.~T.~Liu,
+J.~T.~Yu, W.~Lin, C.~T.~Zuo, and J.~Wang,
+``Use of radiomic features and support vector machine to distinguish Parkinson's disease cases from normal controls,''
+\emph{Annals of Translational Medicine}, vol.~7, no.~23, p.~773, Dec.~2019.
+doi: 10.21037/atm.2019.11.26.
 
 \bibitem{kumar2012}
-Kumar, V., Gu, Y., Basu, S., Berglund, A., Eschrich, S. A., Schabath, M. B., Forster, K., Aerts, H. J. W. L., Dekker, A., Fenstermacher, D., Goldgof, D. B., Hall, L. O., Lambin, P., Balagurunathan, Y., Gatenby, R. A., & Gillies, R. J. (2012). Radiomics: the process and the challenges. Magnetic Resonance Imaging, 30(9), 1234–1248. https://doi.org/10.1016/j.mri.2012.06.010
+V.~Kumar \emph{et al.},
+``Radiomics: The process and the challenges,''
+\emph{Magnetic Resonance Imaging}, vol.~30, no.~9, pp.~1234--1248, 2012.
+doi: 10.1016/j.mri.2012.06.010.
 
 % FOR LR
 
 \bibitem{haralick1973}
-R. M. Haralick, K. Shanmugam, and I. Dinstein,
-“Textural features for image classification,”
-IEEE Transactions on Systems, Man, and Cybernetics, vol. SMC-3, no. 6, pp. 610–621, 1973.
-(Foundational source for GLCM features used in second-order radiomics.)
+R.~M.~Haralick, K.~Shanmugam, and I.~Dinstein,
+``Textural features for image classification,''
+\emph{IEEE Transactions on Systems, Man, and Cybernetics}, vol.~SMC-3, no.~6, pp.~610--621, 1973.
 
 \bibitem{gillies2016}
-R. J. Gillies, P. E. Kinahan, and H. Hricak,
-“Radiomics: Images Are More than Pictures, They Are Data,”
-Radiology, vol. 278, no. 2, pp. 563–577, 2016.
-(Validates the predictive power of radiomic texture descriptors in medical imaging.)
+R.~J.~Gillies, P.~E.~Kinahan, and H.~Hricak,
+``Radiomics: Images are more than pictures, they are data,''
+\emph{Radiology}, vol.~278, no.~2, pp.~563--577, 2016.
+doi: 10.1148/radiol.2015151169.
 
 \bibitem{aerts2014}
-H. J. W. L. Aerts et al.,
-“Decoding tumour phenotype by noninvasive imaging using a quantitative radiomics approach,”
-Nature Communications, vol. 5, Article 4006, 2014.
-(Demonstrates that radiomic signatures add predictive power beyond raw images.)
+H.~J.~W.~L.~Aerts \emph{et al.},
+``Decoding tumour phenotype by noninvasive imaging using a quantitative radiomics approach,''
+\emph{Nature Communications}, vol.~5, Art.~no.~4006, 2014.
+doi: 10.1038/ncomms5006.
 
 \bibitem{chaddad2018}
-A. Chaddad, C. Desrosiers, and M. Toews,
-“Radiomics in brain tumor: image assessment, quantitative feature descriptors, and machine-learning approaches,”
-Journal of Oncology, vol. 2018, Article 6927315.
-(Specifically supports MRI + radiomics fusion for tumor classification.)
+A.~Chaddad, C.~Desrosiers, and M.~Toews,
+``Radiomics in brain tumor: Image assessment, quantitative feature descriptors, and machine-learning approaches,''
+\emph{Journal of Oncology}, vol.~2018, Art.~no.~6927315, 2018.
+doi: 10.1155/2018/6927315.
 
 \bibitem{chen2020}
-L. Chen, R. Bentley, R. Mori, et al.,
-“Machine learning for brain tumor classification using radiomic features,”
-Scientific Reports, vol. 10, Article 150, 2020.
-(Validates LR as a competitive model when using texture-based radiomic inputs.)
+L.~Chen, R.~Bentley, R.~Mori \emph{et al.},
+``Machine learning for brain tumor classification using radiomic features,''
+\emph{Scientific Reports}, vol.~10, Art.~no.~150, 2020.
+doi: 10.1038/s41598-019-56798-3.
 
 \bibitem{lecun2015}
-Y. LeCun, Y. Bengio, and G. Hinton,
-“Deep learning,”
-Nature, vol. 521, pp. 436–444, 2015.
-(Shows linear models cannot capture spatial structure—CNNs are needed.)
-
+Y.~LeCun, Y.~Bengio, and G.~Hinton,
+``Deep learning,''
+\emph{Nature}, vol.~521, pp.~436--444, 2015.
+doi: 10.1038/nature14539.
 
 
 \end{thebibliography}
