@@ -1,6 +1,8 @@
 """
 experiments.py
 
+Goal: For the Kaggle Brain Tumor dataset, build the 7 feature subsets (D1–D7)
+and train/tune *logistic regression* on each, then compare performance.
 
 Datasets (all aligned over the same N = 3762 samples):
 
@@ -31,6 +33,8 @@ Model: Logistic Regression (with StandardScaler in a Pipeline)
 - Scoring = accuracy (matches methodology text)
 - Results summarized via test accuracy and macro-F1.
 
+At the end we also generate a bar chart that compares
+Test Accuracy and Test Macro F1 across D1–D7.
 """
 
 from __future__ import annotations
@@ -61,8 +65,6 @@ from sklearn.metrics import (
     f1_score,
     confusion_matrix,
     classification_report,
-    roc_curve,
-    precision_recall_curve,
 )
 
 # ---------------------------------------------------------------------
@@ -76,7 +78,7 @@ IMAGE_COL = "Image"
 
 RANDOM_STATE = 42
 METRIC_DIGITS = 4
-IMAGE_SIZE = (64, 64)  
+IMAGE_SIZE = (64, 64)  # resized MRI slices
 IMAGE_FEATURES_PATH = f"cache_image_features_{IMAGE_SIZE[0]}x{IMAGE_SIZE[1]}.npy"
 
 FIRST_ORDER_COLS = [
@@ -232,6 +234,7 @@ def build_image_features_matrix(df_clean: pd.DataFrame) -> np.ndarray:
     Build an (N, D_img) matrix of flattened image pixels corresponding
     row-by-row to df_clean.
 
+    Uses a simple .npy cache so we don't recompute features every run.
     """
     expected_n = len(df_clean)
     expected_d = IMAGE_SIZE[0] * IMAGE_SIZE[1]
@@ -409,7 +412,7 @@ def run_hyperparameter_search(ds_key: str, X_train, y_train, label: str):
     gs = GridSearchCV(
         estimator=pipe,
         param_grid=param_grid,
-        scoring="accuracy",        
+        scoring="accuracy",        # matches methodology
         cv=cv,
         n_jobs=-1,
         verbose=1,
@@ -428,19 +431,13 @@ def run_hyperparameter_search(ds_key: str, X_train, y_train, label: str):
 
 
 # ---------------------------------------------------------------------
-# EVALUATION & PLOTS
+# EVALUATION (NO ROC / NO CONFUSION MATRIX PLOTS)
 # ---------------------------------------------------------------------
 
 def evaluate_on_test(model, X_test, y_test, file_label: str, pretty_label: str):
     print_section(f"TEST SET EVALUATION – {pretty_label}", "=")
 
     y_pred = model.predict(X_test)
-
-    if hasattr(model, "predict_proba"):
-        y_proba = model.predict_proba(X_test)[:, 1]
-    else:
-        decision = model.decision_function(X_test)
-        y_proba = (decision - decision.min()) / (decision.max() - decision.min() + 1e-12)
 
     acc = accuracy_score(y_test, y_pred)
     prec = precision_score(y_test, y_pred, zero_division=0)
@@ -455,78 +452,14 @@ def evaluate_on_test(model, X_test, y_test, file_label: str, pretty_label: str):
     print(f"F1 (binary): {f1_bin:.{METRIC_DIGITS}f}")
     print(f"F1 (macro) : {f1_macro:.{METRIC_DIGITS}f}")
 
+    # Just for textual insight, we can still print the confusion matrix and classification report,
+    # but we DO NOT plot anything or save ROC/PR/confusion matrix images.
     cm = confusion_matrix(y_test, y_pred)
     print_subsection("Confusion matrix")
     print(cm)
 
     print_subsection("Classification report")
     print(classification_report(y_test, y_pred, digits=METRIC_DIGITS))
-
-    out_dir = Path("results")
-    out_dir.mkdir(exist_ok=True)
-
-    # Confusion matrix heatmap
-    plt.figure(figsize=(5, 4))
-    plt.imshow(cm, interpolation="nearest", cmap="Blues")
-    plt.title(f"Confusion Matrix – {pretty_label}")
-    plt.colorbar()
-    tick_marks = np.arange(2)
-    plt.xticks(tick_marks, ["0", "1"])
-    plt.yticks(tick_marks, ["0", "1"])
-
-    thresh = cm.max() / 2.0
-    for i in range(cm.shape[0]):
-        for j in range(cm.shape[1]):
-            plt.text(
-                j,
-                i,
-                format(cm[i, j], "d"),
-                horizontalalignment="center",
-                color="white" if cm[i, j] > thresh else "black",
-            )
-
-    plt.ylabel("True label")
-    plt.xlabel("Predicted label")
-    plt.tight_layout()
-    cm_path = out_dir / f"cm_{file_label}.png"
-    plt.savefig(cm_path, dpi=200)
-    plt.close()
-
-    fpr, tpr, _ = roc_curve(y_test, y_proba)
-    precision_curve, recall_curve, _ = precision_recall_curve(y_test, y_proba)
-
-    # ROC curve (no AUC printed)
-    plt.figure(figsize=(5, 4))
-    plt.plot(fpr, tpr, label="ROC curve")
-    plt.plot([0, 1], [0, 1], "k--")
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel("False Positive Rate")
-    plt.ylabel("True Positive Rate")
-    plt.title(f"ROC Curve – {pretty_label}")
-    plt.legend(loc="lower right")
-    plt.tight_layout()
-    roc_path = out_dir / f"roc_{file_label}.png"
-    plt.savefig(roc_path, dpi=200)
-    plt.close()
-
-    # Precision-Recall curve
-    plt.figure(figsize=(5, 4))
-    plt.plot(recall_curve, precision_curve)
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel("Recall")
-    plt.ylabel("Precision")
-    plt.title(f"Precision-Recall Curve – {pretty_label}")
-    plt.tight_layout()
-    pr_path = out_dir / f"pr_{file_label}.png"
-    plt.savefig(pr_path, dpi=200)
-    plt.close()
-
-    print_subsection("Saved plots")
-    print(f"Confusion matrix:      {cm_path}")
-    print(f"ROC curve:             {roc_path}")
-    print(f"Precision-Recall curve:{pr_path}")
 
     return {
         "accuracy": acc,
@@ -535,6 +468,57 @@ def evaluate_on_test(model, X_test, y_test, file_label: str, pretty_label: str):
         "f1_binary": f1_bin,
         "f1_macro": f1_macro,
     }
+
+
+# ---------------------------------------------------------------------
+# SUMMARY BAR CHART (BEST VISUAL FOR THE PAPER)
+# ---------------------------------------------------------------------
+def plot_summary_bar_chart(df_comp: pd.DataFrame, out_dir: Path):
+    """
+    Bar chart comparing Test Accuracy and Test Macro F1 across D1–D7.
+
+    X-axis: D1..D7 only (short, non-overlapping).
+    Full text descriptions stay in the summary table / paper caption.
+    """
+    out_dir.mkdir(exist_ok=True)
+    fig_path = out_dir / "logreg_D1_D7_bar_comparison.png"
+
+    # Short labels (D1..D7)
+    labels = df_comp["Dataset"].tolist()          # e.g. "D7_image_plus_all"
+    labels_short = [lbl.split("_")[0] for lbl in labels]  # "D7", "D3", ...
+
+    x = np.arange(len(labels_short))
+    width = 0.35
+
+    acc_values = df_comp["Test Accuracy"].values
+    f1_values = df_comp["Test Macro F1"].values
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    bars_acc = ax.bar(x - width / 2, acc_values, width, label="Accuracy")
+    bars_f1 = ax.bar(x + width / 2, f1_values, width, label="Macro F1")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels_short, fontsize=10)
+    ax.set_ylabel("Score")
+    ax.set_ylim(0.85, 1.01)
+    ax.set_title("Logistic Regression Performance Across D1–D7")
+    ax.legend(loc="lower right")
+
+    # Light horizontal grid
+    ax.grid(axis="y", linestyle="--", alpha=0.4)
+
+    # Value labels on top of each bar
+    ax.bar_label(bars_acc, fmt="%.3f", padding=3, fontsize=8)
+    ax.bar_label(bars_f1, fmt="%.3f", padding=3, fontsize=8)
+
+    fig.tight_layout()
+    fig.savefig(fig_path, dpi=200)
+    plt.close(fig)
+
+    print_subsection("Saved comparison bar chart")
+    print(f"Bar chart (Accuracy & Macro F1 across D1–D7): {fig_path}")
+
 
 
 # ---------------------------------------------------------------------
@@ -628,6 +612,9 @@ def main():
     print_subsection("Best logistic regression model (by Test Accuracy)")
     print(best_row.to_string())
     print(f"\nSummary saved to: {summary_path}")
+
+    # 7) Plot the comparison bar chart (Accuracy & Macro F1)
+    plot_summary_bar_chart(df_comp, out_dir)
 
 
 if __name__ == "__main__":
