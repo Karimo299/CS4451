@@ -106,9 +106,6 @@ To apply our models, both SVMs use scikit-learn library which provides standard 
 
 
 
-
-
-
 \section{Methods}
 
 \subsection{Research Objectives}
@@ -378,8 +375,8 @@ the various feature subsets we have defined above and compare logistic regressio
 
 \section{Results}
 
-\subsection{System Requirements and Architecture Outcomes}
-
+\subsection{System and Design Requirements}
+For all code implementation, see the attached zip file. This file includes all information needed to run the experiment and acquire the results.
 The experimental pipeline was designed with the following requirements:
 
 
@@ -422,7 +419,7 @@ During implementation, several aspects of the system were verified:
 Logistic regression was trained and tuned independently on each dataset variant
 (D1–D7), representing different combinations of radiomic features and image-based
 features. Across all experiments, D7 (Image + All Tabular Features) achieved the best
-performance, with a test accuracy of 0.9934 and a macro F1-score of 0.9933.
+performance, with a test accuracy of 0.993 and a macro F1-score of 0.993.
 Conversely, the weakest performance was observed in D1 (First-order only) and D4
 (Image-only), both of which lack higher-level texture information that appears essential
 for robust tumor classification.
@@ -439,7 +436,7 @@ Fig.~\ref{fig:lr_bar_graph} summarizes the performance across D1–D7.
 \end{figure}
 
 \subsection{SVM Results Analysis}
-SVM was trained and tested on each dataset variant (D1–D7), representing different combinations of radiomic features and image-based features. The best test accuracy result comes from the D3 data, with a score of 0.980, and also a very high CV score as well (0.986). The best F1 score is also from the D3 data, with a score of 0.991. Across all experiments, D3 achieved the best overall performance. The weakest performance was observed in D4 (image only) with a test accuracy of 0.896, along with a low CV score and a low F1 score. However, the lowest F1 score was reported in D1 with a score of 0.885.
+SVM was trained and tested on each dataset variant (D1–D7), with each dataset representing different combinations of radiomic features and image-based features. The best test accuracy result comes from the D3 data, with a score of 0.980, and also a very high CV score as well (0.986). The best F1 score is also from the D3 data, with a score of 0.991. Across all experiments, D3 achieved the best overall performance. The weakest performance was observed in D4 (image only) with a test accuracy of 0.896, along with a low CV score and a low F1 score. However, the lowest F1 score was reported in D1 with a score of 0.885.
 
 Fig.~\ref{fig:svm_bar_plot.png} summarizes the performance across D1–D7.
 
@@ -447,8 +444,7 @@ Fig.~\ref{fig:svm_bar_plot.png} summarizes the performance across D1–D7.
     \centering
     \includegraphics[width=0.48\textwidth]{svm_bar_graph.png}
     \caption{SVM test accuracy and macro F1-score across feature subsets D1–D7.
-    Performance improves as additional radiomic or image features are incorporated,
-    with the combined image + tabular feature set (D7) performing best.}
+    Performance is best when focusing solely on tabular data (D3), and decreases once images are introduced.}
     \label{fig:svm_bar_plot}
 \end{figure}
 
@@ -504,29 +500,29 @@ D7 -- Image + all tabular     & 0.850 & 0.919 & 0.965 \\
 
 
 
-\subsection{Result Interpretations - logistic regression}
+\subsection{Result Interpretations - Logistic Regression}
 
-\textbf{First-order features alone are limited (D1).} These features encode only global intensity statistics and therefore fail to capture local tumor structure.
+\textbf{First-order features alone are limited.} From the results, we can see that first-order features have a low accuracy, and lack higher-level information. These features encode only global intensity statistics and therefore fail to capture local tumor structure. This can be backed up by \cite{gillies2016} and \cite{haralick1973}.
 
-\textbf{Second-order texture features substantially improve performance (D2).}
+\textbf{Second-order texture features substantially improve performance.}
 Texture descriptors such as contrast, entropy, and homogeneity encode spatial
-irregularities that are highly characteristic of tumor presence.
+irregularities that are highly characteristic of tumor presence. This can be backed up by \cite{aerts2014}.
 
-\textbf{Image-only inputs perform poorly with linear models (D4).}
-Because logistic regression is a linear classifier, it cannot efficiently model
-complex spatial patterns present in raw pixel data when the image is flattened.
+\textbf{Image-only inputs perform poorly with linear models.}
+Because logistic regression is a linear classifier, it cannot efficiently model complex spatial patterns present in raw pixel data when the image is flattened. This can be backed up by \cite{lecun2015} and \cite{chen2020} which validates logistic regression as a competitive model when using texture-based radiomic inputs.
 
-\textbf{Combining image and tabular features yields the strongest results (D5–D7).}
-The combination provides both high-level radiomic summaries and fine-grained pixel
-cues, leading to the highest-performing model (D7).
+\textbf{Combining image and tabular features yields the strongest results.}
+The combination provides both high-level radiomic summaries and fine-grained pixel cues, leading to the highest-performing model (D7). \cite{chaddad2018}.
+
+
 
 \subsection{Result Interpretations - SVM}
+\textbf{Tabular features are strong:} All tabular datasets outperform image datasets in test accuracy, which could indicate that SVM performs better with tabular data than it does with image data with this specific model and dataset. D3 (all tabular features) is also the best performer, which strengthens the indication that tabular features outperform non-tabular features in this evaluation. The idea that tabular data only is strong is backed up by \cite{yun2019}.
 
-\textbf{Tabular features are strong:} All tabular datasets outperform image datasets in test accuracy, which could indicate that SVM performs better with tabular data than it does with image data with this specific model and dataset. D3 (all tabular features) is also the best performer, which strengthens the indication that tabular features outperform non-tabular features in this evaluation.
+\textbf{Image data performs poorly: }D4 (image only) is observed as the weakest performer in test accuracy, which indicates that images alone are not strong. When tabular data is added, performance rises, which shows us that tabular data strengthens the model. Other models perform better with image data, which can be backed up by \cite{wu2019}.
 
-\textbf{Image data performs poorly: }D4 (image only) is observed as the weakest performer in test accuracy, which indicates that images alone are not strong. When tabular data is added, performance rises. This shows us that tabular data strengthens the model.
+\textbf{First-order features are not enough: }D1 is also observed as a weak performer and it only takes into account first-order features. This is an indication that first-order features are not enough to detect brain tumors and the data itself may not descriptive enough for the model to be accurate in this assessment. \cite{kumar2012} states that first-order features do not tell the model enough and leads to a smaller accuracy.
 
-\textbf{First-order features are not enough: }D1 is also observed as a weak performer and it only takes into account first-order features. This is an indication that first-order features are not enough to detect brain tumors and the data itself may not descriptive enough for the model to be accurate in this assessment.
 
 \subsection{Comparison of Logistic Regression and SVM}
 
@@ -572,7 +568,7 @@ D7 -- Image + all tabular     & 0.993 & 0.993 & 0.919 & 0.965 \\
 
 \subsection{Novelty of Our Approach}
 
-Two aspects of novelty characterize our methodology:
+These are the main aspects of novelty that characterize our methodology:
 
 \begin{enumerate}
     \item \textbf{A unified evaluation of seven radiomic–image feature subsets.}
@@ -584,11 +580,13 @@ Two aspects of novelty characterize our methodology:
     Few studies evaluate logistic regression on a combined 4096-pixel + 13-feature
     input space. Our results show that with proper standardization and regularization,
     logistic regression can remain stable and highly accurate even in this setting.
-\end{enumerate}
+    
+    \item \textbf{Certain SVMs work better with tabular only data.}
+    Out findings show that the strongest SVM model uses tabular, radiomic features only. This challenges the assumption that adding features improves performance.
 
-Overall, the experiments confirm that radiomic features—
-particularly texture descriptors—carry strong predictive signals for tumor
-classification.
+    \item \textbf{A well-regularized linear model can be competitive with a non-linear SVM.}
+    Our results suggest that a linear model can be superior to  and outperform a non linear model. 
+
 
 
 \section{Conclusions \& Future Work}
@@ -713,6 +711,57 @@ G.~Wahid, A.~Haroon, M.~Samad, and N.~Tamkeen,
 \emph{J. Saidu Med. Coll.} [Online], vol.~12, no.~3, pp.~133--137,
 Sep.~26, 2022. Available: \url{https://jsmc.pk/index.php/jsmc/article/view/697}.
 [Accessed: Dec. 8, 2025].
+
+% FOR SVM
+
+\bibitem{yun2019}
+Yun, J., Park, J. E., Lee, H., Ham, S., Kim, N., & Kim, H. S. (2019). Radiomic features and multilayer perceptron network classifier: a robust MRI classification strategy for distinguishing glioblastoma from primary central nervous system lymphoma. Scientific Reports, 9(1), Article 5746. https://doi.org/10.1038/s41598-019-42276-w
+
+\bibitem{wu2019}
+Wu Y, Jiang JH, Chen L, Lu JY, Ge JJ, Liu FT, Yu JT, Lin W, Zuo CT, Wang J. Use of radiomic features and support vector machine to distinguish Parkinson's disease cases from normal controls. Ann Transl Med. 2019 Dec;7(23):773. doi: 10.21037/atm.2019.11.26. PMID: 32042789; PMCID: PMC6990013.
+
+\bibitem{kumar2012}
+Kumar, V., Gu, Y., Basu, S., Berglund, A., Eschrich, S. A., Schabath, M. B., Forster, K., Aerts, H. J. W. L., Dekker, A., Fenstermacher, D., Goldgof, D. B., Hall, L. O., Lambin, P., Balagurunathan, Y., Gatenby, R. A., & Gillies, R. J. (2012). Radiomics: the process and the challenges. Magnetic Resonance Imaging, 30(9), 1234–1248. https://doi.org/10.1016/j.mri.2012.06.010
+
+% FOR LR
+
+\bibitem{haralick1973}
+R. M. Haralick, K. Shanmugam, and I. Dinstein,
+“Textural features for image classification,”
+IEEE Transactions on Systems, Man, and Cybernetics, vol. SMC-3, no. 6, pp. 610–621, 1973.
+(Foundational source for GLCM features used in second-order radiomics.)
+
+\bibitem{gillies2016}
+R. J. Gillies, P. E. Kinahan, and H. Hricak,
+“Radiomics: Images Are More than Pictures, They Are Data,”
+Radiology, vol. 278, no. 2, pp. 563–577, 2016.
+(Validates the predictive power of radiomic texture descriptors in medical imaging.)
+
+\bibitem{aerts2014}
+H. J. W. L. Aerts et al.,
+“Decoding tumour phenotype by noninvasive imaging using a quantitative radiomics approach,”
+Nature Communications, vol. 5, Article 4006, 2014.
+(Demonstrates that radiomic signatures add predictive power beyond raw images.)
+
+\bibitem{chaddad2018}
+A. Chaddad, C. Desrosiers, and M. Toews,
+“Radiomics in brain tumor: image assessment, quantitative feature descriptors, and machine-learning approaches,”
+Journal of Oncology, vol. 2018, Article 6927315.
+(Specifically supports MRI + radiomics fusion for tumor classification.)
+
+\bibitem{chen2020}
+L. Chen, R. Bentley, R. Mori, et al.,
+“Machine learning for brain tumor classification using radiomic features,”
+Scientific Reports, vol. 10, Article 150, 2020.
+(Validates LR as a competitive model when using texture-based radiomic inputs.)
+
+\bibitem{lecun2015}
+Y. LeCun, Y. Bengio, and G. Hinton,
+“Deep learning,”
+Nature, vol. 521, pp. 436–444, 2015.
+(Shows linear models cannot capture spatial structure—CNNs are needed.)
+
+
 
 \end{thebibliography}
 \vspace{12pt}
