@@ -12,9 +12,8 @@
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
 
-\title{Brain Tumor Classification from MRI Radiomic and Image Features\\
+\title{Brain Tumor Classification from MRI Radiomic and Image Features\\}
 
-}
 
 \author{\IEEEauthorblockN{Otilia Pasculescu}
 \IEEEauthorblockA{\textit{Department of Computer Science} \\
@@ -56,6 +55,29 @@ component, formatting, style, styling, insert
 
 
 \section{Background \& Related Work}
+
+For supervised classification studies for Brain MRI slices, it is common to use publically defined datasets and in this paper we use the Kaggle Brain Tumor dataset. This dataset provides 2D MRI slices with corresponding labels and precomputed first- and second-order radiomic features~\cite{bohajuBrainTumor}.
+ 
+
+Most of the recent literature on the topic of brain tumour classification from MRI scans utilizes deep convolutional neural networks (CNNs) applied directly to 2D slices.
+Abiwinanda et al.\ train a CNN on grayscale brain MRIs that are resized to small
+spatial resolutions (e.g., $64\times64$), which shows that even smaller representations of the image, produce good performance~\cite{abiwinanda2019}. Ait~Amou et al.\ propose a deep-learning MRI diagnosis pipeline for brain tumours and explicitly adopt a similar resizing strategy, citing
+Abiwinanda et al.\ as motivation~\cite{aitamou2022}. Ait~Amou et al.\ introduces a CNN-based MRI diagnosis method for brain tumor classification where it too uses resized images to feed the CNN, citing Abiwinanda et al.\ as motivation~\cite{aitamou2022}. These papers demonstrate that resized MRI slices can be used to achieve a strong performance while reducing computational cost, but note that they focus only on image-only inputs and do not examine any extra precomputed features based on the MRI scan.
+
+Along with resizing, there are other preprocessing techniques and methods that are used in MRI-based studies. Shinohara et al.\ argue that intensity across many MRI scanners and acquisition protocols may vary in intensity and are never consisentent and due to that normalization is an important step to reduce variation before modeling~\cite{shinohara2014}.
+This supports our use of converting the images to grayscale, resizing, and intensity
+normalization before feeding the compressed image into the model, alongside standardization of tabular features.
+
+Cortes and Vapnik introduced SVMs as margin-based classifiers that can learn
+non-linear decision boundaries via kernel functions such as the radial basis
+function (RBF) kernel~\cite{cortes1995support}. 
+
+To apply our models, both SVMs use scikit-learn library which provides standard implementations of classifiers, feature scaling, and cross-validation procedures~\cite{pedregosa2011scikit}.
+
+
+
+
+
 
 \section{Methods}
 
@@ -377,3 +399,6 @@ D.~Cournapeau, M.~Brucher, M.~Perrot, and {\'E}.~Duchesnay,
 \vspace{12pt}
 
 \end{document}
+
+
+
