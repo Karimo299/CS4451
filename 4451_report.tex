@@ -63,15 +63,46 @@ kabousam@uwo.ca
 
 
 \begin{abstract}
-
+Early and accurate detection of brain tumors is essential for improving patient outcomes. Yet, the traditionally used methods of identifying brain tumors can be spotty. In this study, we examine how different types of features, derived from MRI scans of the brain, contribute to automated tumor classification. Using the Kaggle Brain Tumor dataset containing 3,762 MRI slices, we compare logistic regression and RBF-kernel models trained on first-order features, second-order features, image-only inputs, and a combination of these features. Our findings show that combining tabular radiomic features with image data produces the strongest overall performance. It also shows that the logistic regression model remained competitive with SVM in several feature-rich settings.
 \end{abstract}
 
 \begin{IEEEkeywords}
-component, formatting, style, styling, insert
+brain tumor classification, MRI, logistic regression, support vector machine, SVM, medical imaging.
 \end{IEEEkeywords}
+    
+
 
 \section{Introduction}
+Brain cancer is one of the most severe and life-threatening conditions to be diagnosed with. According to the Global Cancer Observatory, approximately 320,000 people died from brain and central nervous system cancer in 2022 alone \cite{gco2025}. In Canada, it is estimated that 3300 people will be diagnosed with brain cancer, of which 78\% will die as a result of that cancer in 2025 \cite{cancercanada2025}. Early detection plays a major role in improving the patient's outcome, which can be the difference between a full recovery and death. Research indicates that earlier diagnosis and intervention significantly improve survival, with one study noting that a diagnosis within two weeks of symptom appearance and surgical intervention within three weeks is associated with prolonging the patient's survival \cite{kawauchi2025}.
 
+
+Typically, brain tumors are detected by radiologists who examine MRI scans for abnormalities. This relies heavily on certified professionals to take the time to detect tumors. Studies also show that radiologist overburden is a major barrier to timely diagnosis, with nearly 29.7\% of delayed MRI and CT reports caused specifically by radiologists having too many scans to interpret \cite{wahid2025}. Additionally, tumors come in different shapes, sizes, contrasts, and textures, making it difficult to identify. While some of them can be easy to identify, others can be challenging to detect, especially early on. 
+
+
+These challenges have contributed to the growing interest in using machine learning to support medical imaging analysis. A well-designed model can pick up subtle patterns that may not be immediately obvious to the human eye, helping improve early detection, increase consistency, and reduce the workload placed on radiologists. Despite substantial work in this area, most studies rely exclusively on image-only inputs, or deep learning pipelines. Our work is different as it directly compares first-order and second-order features alongside tabular features and tests how well they can predict tumors, while also checking whether adding the images improves performance. It offers a simpler approach than most existing studies.
+
+In this paper, we explore how different types of features can be used to predict whether an MRI scan contains a tumor. We will do this by comparing logistic regression and SVM (Support Vector Machine) models trained on the first-order features, second-order features, and the image data. The goal is to determine which combination provides the best representation and provides the most reliable performance for automated brain classification.
+
+
+\section{Background \& Related Work}
+
+For supervised classification studies for Brain MRI slices, it is common to use publically defined datasets and in this paper we use the Kaggle Brain Tumor dataset. This dataset provides 2D MRI slices with corresponding labels and precomputed first- and second-order radiomic features~\cite{bohajuBrainTumor}.
+ 
+
+Most of the recent literature on the topic of brain tumour classification from MRI scans utilizes deep convolutional neural networks (CNNs) applied directly to 2D slices.
+Abiwinanda et al.\ train a CNN on grayscale brain MRIs that are resized to small
+spatial resolutions (e.g., $64\times64$), which shows that even smaller representations of the image, produce good performance~\cite{abiwinanda2019}. Ait~Amou et al.\ propose a deep-learning MRI diagnosis pipeline for brain tumours and explicitly adopt a similar resizing strategy, citing
+Abiwinanda et al.\ as motivation~\cite{aitamou2022}. Ait~Amou et al.\ introduces a CNN-based MRI diagnosis method for brain tumor classification where it too uses resized images to feed the CNN, citing Abiwinanda et al.\ as motivation~\cite{aitamou2022}. These papers demonstrate that resized MRI slices can be used to achieve a strong performance while reducing computational cost, but note that they focus only on image-only inputs and do not examine any extra precomputed features based on the MRI scan.
+
+Along with resizing, there are other preprocessing techniques and methods that are used in MRI-based studies. Shinohara et al.\ argue that intensity across many MRI scanners and acquisition protocols may vary in intensity and are never consisentent and due to that normalization is an important step to reduce variation before modeling~\cite{shinohara2014}.
+This supports our use of converting the images to grayscale, resizing, and intensity
+normalization before feeding the compressed image into the model, alongside standardization of tabular features.
+
+Cortes and Vapnik introduced SVMs as margin-based classifiers that can learn
+non-linear decision boundaries via kernel functions such as the radial basis
+function (RBF) kernel~\cite{cortes1995support}. 
+
+To apply our models, both SVMs use scikit-learn library which provides standard implementations of classifiers, feature scaling, and cross-validation procedures~\cite{pedregosa2011scikit}.
 
 \section{Background \& Related Work}
 
@@ -224,7 +255,7 @@ where $\mathcal{X}$ denotes the space of all feature vectors constructed as abov
 
 
 \subsubsection{Logistic Regression Model}
-
+Logistic regression is essentially a modified form of linear regression that is designed for binary outcomes. Instead of predicting raw continuous values, it models the log-odds of the positive class as a linear function of the inputs. In our case, it models the log-odds of tumour presence and then passes that value through the sigmoid function (a sideways S-shaped curve) to convert it into a probability between 0 and 1. \cite{demaris2013logistic}
 \subsubsection{Support Vector Machine Model}
 
 SVMs are margin-based classifiers that finds the decision boundary which maximizes the distance between classes ~\cite{cortes1995support}. This model can represent non-linear decision boundaries by implicitly mapping the input features into a higher-dimensional
@@ -680,7 +711,28 @@ D.~Cournapeau, M.~Brucher, M.~Perrot, and {\'E}.~Duchesnay,
 \emph{Journal of Machine Learning Research}, vol.~12, pp.~2825--2830, 2011.
 [Online]. Available: \url{https://www.jmlr.org/papers/v12/pedregosa11a.html}.
 
+\bibitem{demaris2013logistic}
+A.~DeMaris and S.~H.~Selman,
+``Logistic regression,''
+in \emph{Converting Data into Evidence: A Statistics Primer for the Medical Practitioner}.
+New York, NY: Springer, 2013, pp.~115--136.
+doi: 10.1007/978-1-4614-7792-1\_7.
 
+\bibitem{gco2025}
+Global Cancer Observatory, ``Cancer Today.'' [Online]. Available: \url{https://gco.iarc.fr/today/en/dataviz/pie?mode=population&group_populations=0}. [Accessed: Dec. 7, 2025].
+
+\bibitem{cancercanada2025}
+Canadian Cancer Society / Société canadienne du cancer, ``Brain and other nervous system cancer statistics,'' \emph{Canadian Cancer Society}. [Online]. Available: \url{https://cancer.ca/en/cancer-information/cancer-types/brain-and-spinal-cord/statistics}. [Accessed: Dec. 7, 2025].
+
+\bibitem{kawauchi2025}
+D.~Kawauchi \emph{et al.}, ``Early diagnosis and surgical intervention within 3 weeks from symptom onset are associated with prolonged survival of patients with glioblastoma,'' \emph{Neurosurgery}, vol.~91, no.~5, pp.~741--748, Nov.~2022. [Online]. Available: \url{https://pmc.ncbi.nlm.nih.gov/articles/PMC9531976/}. [Accessed: Dec. 8, 2025].
+
+\bibitem{wahid2025}
+G.~Wahid, A.~Haroon, M.~Samad, and N.~Tamkeen,
+``Causes of delay in radiological reporting and ways to reduce them,''
+\emph{J. Saidu Med. Coll.} [Online], vol.~12, no.~3, pp.~133--137,
+Sep.~26, 2022. Available: \url{https://jsmc.pk/index.php/jsmc/article/view/697}.
+[Accessed: Dec. 8, 2025].
 
 \end{thebibliography}
 \vspace{12pt}
