@@ -412,7 +412,7 @@ def run_hyperparameter_search(ds_key: str, X_train, y_train, label: str):
     gs = GridSearchCV(
         estimator=pipe,
         param_grid=param_grid,
-        scoring="accuracy",        # matches methodology
+        scoring="accuracy",       
         cv=cv,
         n_jobs=-1,
         verbose=1,
@@ -452,8 +452,6 @@ def evaluate_on_test(model, X_test, y_test, file_label: str, pretty_label: str):
     print(f"F1 (binary): {f1_bin:.{METRIC_DIGITS}f}")
     print(f"F1 (macro) : {f1_macro:.{METRIC_DIGITS}f}")
 
-    # Just for textual insight, we can still print the confusion matrix and classification report,
-    # but we DO NOT plot anything or save ROC/PR/confusion matrix images.
     cm = confusion_matrix(y_test, y_pred)
     print_subsection("Confusion matrix")
     print(cm)
@@ -607,7 +605,7 @@ def main():
     with pd.option_context("display.float_format", lambda x: f"{x:.4f}"):
         print(df_comp.to_string(index=False))
 
-    # Highlight the best model (by accuracy; you can switch to Macro F1 if you want)
+    # Highlight the best model 
     best_row = df_comp.iloc[0]
     print_subsection("Best logistic regression model (by Test Accuracy)")
     print(best_row.to_string())
