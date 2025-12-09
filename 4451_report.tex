@@ -74,46 +74,33 @@ brain tumor classification, MRI, logistic regression, support vector machine, SV
 
 \section{Introduction} 
 
-There are many life-threatening forms of cancer in the world but brain cancer is considered to be one of the most severe and life-threatening. According to the Global Cancer Observatory, approximately 320,000 people died from brain and central nervous system cancer in 2022 alone \cite{gco2025}. In Canada, it is estimated that around 3300 people will be diagnosed with brain cancer and of which 78\% will die as a result of that cancer in 2025 \cite{cancercanada2025}. 
+o According to the Global Cancer Observatory, approximately 320,000 people died from brain and central nervous system cancer in 2022 alone \cite{gco2025}. In Canada, it is estimated that around 3300 people will be diagnosed with brain cancer, and of which 78\% will die as a result of that cancer in 2025 \cite{cancercanada2025}. 
 
+To improve the patient's chance of living, early detection can be the difference between a full recovery and death. Research indicates that earlier diagnosis and intervention significantly improve survival, with one study noting that a diagnosis within two weeks of symptom appearance and surgical intervention within three weeks is associated with prolonging the patient's survival \cite{kawauchi2025}. 
 
+Typically, brain tumors are found by radiologists who examine MRI scans for abnormalities. Studies also show that radiologist overburden is a major barrier to timely diagnosis, with nearly 29.7\% of delayed MRI and CT reports caused specifically by radiologists having too many scans to interpret \cite{wahid2025}. Another thing to consider is that tumors are not all the same sizes, contrasts, textures and etc. They tend to be unique, making it harder to identify. While some tumors can be easy to identify, others can be challenging to detect.
 
-To improve the patient's chance of living, early detection can be the difference between a full recovery or death. Research indicates that earlier diagnosis and intervention significantly improve survival, with one study noting that a diagnosis within two weeks of symptom appearance and surgical intervention within three weeks is associated with prolonging the patient's survival \cite{kawauchi2025}. 
+Challenges like this have led to a rapidly growing interest in utilizing machine learning to help improve tumor detection and improve the patient's chance of living. A well-designed model can be trained to learn subtle patterns not obvious to humans, which will improve early detection, increase consistency, and reduce the workload placed on radiologists, which may in turn lower the risk of human error. Despite substantial work in this area, most studies rely exclusively on image-only inputs or deep learning pipelines. Our work is different as it directly compares first-order and second-order features alongside tabular features and tests how well they can predict tumors, while also checking whether adding the images improves performance. It offers a simpler approach than most existing studies. 
 
-Typically, brain tumors are found by radiologists who examine MRI scans for abnormalities. Studies also show that radiologist overburden is a major barrier to timely diagnosis, with nearly 29.7\% of delayed MRI and CT reports caused specifically by radiologists having too many scans to interpret \cite{wahid2025}. Another thing to consider is that tumors are not all the same sizes, contrasts, textures and etc. They tend to be unique making it harder to identify. While some tumors can be easy to identify, others can be challenging to detect.
-
-Challenges like this have led a rapidly growing interest in utilizing machine learning to help improve tumor detection and improve the patient's chance of living. A well-designed model can be trained to learn subtle patters not obvious to humans which will improve early detection, increase consistency, and reduce the workload placed on radiologists, which may in turn lower the risk of human error. Despite substantial work in this area, most studies rely exclusively on image-only inputs, or deep learning pipelines. Our work is different as it directly compares first-order and second-order features alongside tabular features and tests how well they can predict tumors, while also checking whether adding the images improves performance. It offers a simpler approach than most existing studies. 
-
-
-
-Due to this issues, there has been a growing interest in finding ways to help with tumor detection including using machine learning. A well-designed model may be able to pick up patterns in MRI imaging that are not immediately obvious to the human eye. This will help improve early detection, increase consistency, and reduce the workload placed on radiologists. Despite substantial work in this area, most studies rely exclusively on image-only inputs, or deep learning pipelines. Our work has a different approach: we directly compare different tabular feature sets and image-plus-tabular combinations to see how each dataset configuration affects brain-tumor classification performance the greatest. It offers a simpler approach than most existing studies. 
-
-
+Due to these issues, there has been a growing interest in finding ways to help with tumor detection, including using machine learning. A well-designed model may be able to pick up patterns in MRI imaging that are not immediately obvious to the human eye. This will help improve early detection, increase consistency, and reduce the workload placed on radiologists. Despite substantial work in this area, most studies rely exclusively on image-only inputs or deep learning pipelines. Our work has a different approach: we directly compare different tabular feature sets and image-plus-tabular combinations to see how each dataset configuration affects brain-tumor classification performance the most. It offers a simpler approach than most existing studies. 
 
 In this paper, we explore how different types of features can be used to predict whether an MRI scan contains a tumor. We will do this by comparing logistic regression and SVM (Support Vector Machine) models trained on the first-order features, second-order features, and the image data. The goal is to determine which combination provides the best representation and provides the most reliable performance for automated brain classification.
 
 
 \section{Background \& Related Work}
 
-For supervised classification studies for Brain MRI slices, it is common to use publically defined datasets and in this paper we use the Kaggle Brain Tumor dataset. This dataset provides 2D MRI slices with corresponding labels and precomputed first- and second-order radiomic features~\cite{bohajuBrainTumor}.
- 
+For supervised classification studies for Brain MRI slices, it is common to use publicly defined datasets, and in this paper, we use the Kaggle Brain tumor dataset. This dataset provides 2D MRI slices with corresponding labels and precomputed first- and second-order radiomic features~\cite{bohajuBrainTumor}.
 
-Most of the recent literature on the topic of brain tumour classification from MRI scans utilizes deep convolutional neural networks (CNNs) applied directly to 2D slices.
-Abiwinanda et al.\ train a CNN on grayscale brain MRIs that are resized to small
-spatial resolutions (e.g., $64\times64$), which shows that even smaller representations of the image, produce good performance~\cite{abiwinanda2019}. Ait~Amou et al.\ propose a deep-learning MRI diagnosis pipeline for brain tumours and explicitly adopt a similar resizing strategy, citing
-Abiwinanda et al.\ as motivation~\cite{aitamou2022}. Ait~Amou et al.\ introduces a CNN-based MRI diagnosis method for brain tumor classification where it too uses resized images to feed the CNN, citing Abiwinanda et al.\ as motivation~\cite{aitamou2022}. These papers demonstrate that resized MRI slices can be used to achieve a strong performance while reducing computational cost, but note that they focus only on image-only inputs and do not examine any extra precomputed features based on the MRI scan.
+Most of the recent literature on the topic of brain tumor classification from MRI scans utilises deep convolutional neural networks (CNNs) applied directly to 2D slices. Abiwinanda et al.\ train a CNN on grayscale brain MRIs that are resized to small spatial resolutions (e.g., $64\times64$), which shows that even smaller representations of the image produce good performance~\cite{abiwinanda2019}. Ait~Amou et al.\ propose a deep-learning MRI diagnosis pipeline for brain tumors and explicitly adopt a similar resizing strategy, citing Abiwinanda et al.\ as motivation~\cite{aitamou2022}. Ait~Amou et al.\ introduce a CNN-based MRI diagnosis method for brain tumor classification, where it too uses resized images to feed the CNN, citing Abiwinanda et al.\ as motivation~\cite{aitamou2022}. These papers demonstrate that resized MRI slices can be used to achieve a strong performance while reducing computational cost, but note that they focus only on image-only inputs and do not examine any extra precomputed features based on the MRI scan.
 
-Along with resizing, there are other preprocessing techniques and methods that are used in MRI-based studies. Shinohara et al.\ argue that intensity across many MRI scanners and acquisition protocols may vary in intensity and are never consisentent and due to that normalization is an important step to reduce variation before modeling~\cite{shinohara2014}.
-This supports our use of converting the images to grayscale, resizing, and intensity
-normalization before feeding the compressed image into the model, alongside standardization of tabular features.
+Along with resizing, there are other preprocessing techniques and methods that are used in MRI-based studies. Shinohara et al.\ argue that intensity across many MRI scanners and acquisition protocols may vary in intensity and are never consistent, and due to that, normalization is an important step to reduce variation before modeling~\cite{shinohara2014}. This supports our use of converting the images to grayscale, resizing, and intensity normalization before feeding the compressed image into the model, alongside standardization of tabular features.
 
-Cortes and Vapnik introduced SVMs as margin-based classifiers that can learn
-non-linear decision boundaries via kernel functions such as the radial basis
-function (RBF) kernel~\cite{cortes1995support}. 
+Cortes and Vapnik introduced SVMs as margin-based classifiers that can learn non-linear decision boundaries via kernel functions such as the radial basis function (RBF) kernel~\cite{cortes1995support}. 
 
-To apply our models, both SVMs use scikit-learn library which provides standard implementations of classifiers, feature scaling, and cross-validation procedures~\cite{pedregosa2011scikit}.
+To apply our models, both SVMs use scikit-learn library, which provides standard implementations of classifiers, feature scaling, and cross-validation procedures~\cite{pedregosa2011scikit}.
 
 First and second order features are crucial for improving diagnostic, prognostic, and predictive accuracies~\cite{gillies2016}.
+
 Since imaging is routinely medically practiced, adding radiomic features could result in much better classifications, indicating that radiomic features are useful for detecting the presence of tumors~\cite{aerts2014}.
 
 
@@ -122,11 +109,11 @@ Since imaging is routinely medically practiced, adding radiomic features could r
 \subsection{Research Objectives}
 
 
-In this paper we test the following hypothesis:
+In this paper, we test the following hypothesis:
 \begin{quote}
 Across the feature subsets we consider, models that combine
 image-based MRI features with tabular features achieve higher 
-performance in classifying tumour vs non-tumour MRI scans than models
+performance in classifying tumor vs non-tumor MRI scans than models
 that use a single feature type (tabular-only or image-only), and
 for any given feature subset, an RBF-kernel support vector machine (SVM)
 performs better than the logistic regression model.
@@ -146,7 +133,7 @@ cross-validation with grid search.
 
 \textbf{O3:} Compare classification performance across feature subsets and models
 using held-out test accuracy and macro-averaged F1-score, and analyze which
-feature subset and which model (logistic vs SVM) perform best.
+feature subset and which model (logistic vs SVM) performs best.
 
 
 \subsection{Research Methodology}
@@ -158,7 +145,7 @@ a CSV file with the precomputed radiomic features and corresponding MRI slice
 filenames that those features belong to, along with the raw brain MRI images themselves. 
 
 The raw CSV contains $N = 3762$ samples. We check for and drop any rows with
-features taking infinite values, but in this dataset no rows are removed. All feature vectors in the dataset have one to one correspondence to a 2D MRI slice along with a binary label \texttt{Class} where label 1 means that the MRI slice contains a tumor and 0 means the MRI slice does not contain a tumor. For each row in the CSV, it includes an \texttt{Image} identifier (to link row of features to image), the class (tumor or no tumor), and 13 tabular features where the features themselves are divided into two types: 
+features taking infinite values, but in this dataset, no rows are removed. All feature vectors in the dataset have one to one correspondence to a 2D MRI slice, along with a binary label \texttt{Class} where label 1 means that the MRI slice contains a tumor and 0 means the MRI slice does not contain a tumor. For each row in the CSV, it includes an \texttt{Image} identifier (to link the row of features to the image), the class (tumor or no tumor), and 13 tabular features where the features themselves are divided into two types: 
 \paragraph{First-order features.}
 \begin{itemize}
     \item Mean
@@ -214,8 +201,7 @@ and then normalized to the range $[0, 1]$. By reducing the size of the original 
 Let $\mathbf{x}_{\text{img}} \in \mathbb{R}^{4096}$ be the flattened representation
 (of length $64\times64$) of the compressed and normalized grayscale MRI slice in pixels and $\mathbf{x}_{\text{tab}} \in \mathbb{R}^{13}$ represent the full tabular feature vector for a given MRI slice. 
 
-For each dataset variant defined above, we construct a single feature vector $\mathbf{x}$ from
-these components as follows:
+For each dataset variant defined above, we construct a single feature vector $\mathbf{x}$ from these components are as follows:
 \begin{itemize}
     \item tabular-only variants (D1--D3): $\mathbf{x} \subseteq \mathbf{x}_{\text{tab}}$ where $\mathbf{x}$ can contain all tabular features or a subset.
     \item image-only variant (D4): $\mathbf{x} = \mathbf{x}_{\text{img}}$.
@@ -243,14 +229,14 @@ where $\mathcal{X}$ denotes the space of all feature vectors constructed as abov
 
 
 \subsubsection{Logistic Regression Model}
-Logistic regression is essentially a modified form of linear regression that is designed for binary outcomes. Instead of predicting raw continuous values, it models the log-odds of the positive class as a linear function of the inputs. In our case, it models the log-odds of tumour presence and then passes that value through the sigmoid function (a sideways S-shaped curve) to convert it into a probability between 0 and 1. \cite{demaris2013logistic}
+Logistic regression is essentially a modified form of linear regression that is designed for binary outcomes. Instead of predicting raw continuous values, it models the log-odds of the positive class as a linear function of the inputs. In our case, it models the log-odds of tumor presence and then passes that value through the sigmoid function (a sideways S-shaped curve) to convert it into a probability between 0 and 1. \cite{demaris2013logistic}
 \subsubsection{Support Vector Machine Model}
 
 SVMs are margin-based classifiers that find the decision boundary which maximizes the distance between classes ~\cite{cortes1995support}. This model can represent non-linear decision boundaries by implicitly mapping the input features into a higher-dimensional
 space through the kernel function. In this paper, we utilize an SVM model with a radial basis function (RBF) kernel~\cite{cortes1995support} as our main model,
 implemented using the machine learning library scikit-learn~\cite{pedregosa2011scikit}.
 
-For each of the seven datasets D1--D7 we have defined above each with a unique feature configuration, we then train a separate RBF SVM model on the corresponding feature vectors $\mathbf{x}$. To avoid features with large values dominating the kernel, we standardize
+For each of the seven datasets D1--D7 we have defined above, each with a unique feature configuration, we then train a separate RBF SVM model on the corresponding feature vectors $\mathbf{x}$. To avoid features with large values dominating the kernel, we standardize
 all input features to zero mean and unit variance using a \texttt{StandardScaler} inside a scikit-learn \texttt{Pipeline}.
 
 The RBF SVM has two key hyperparameters:
@@ -267,7 +253,7 @@ For each dataset variant D1--D7, we follow the same training and evaluation
 protocol for both logistic regression and SVM models. We split each dataset
 into 80\% training and 20\% testing using
 \texttt{train\_test\_split(..., test\_size=0.2, stratify=y, random\_state=42)}
-to preserve the tumour / non-tumour class proportions and ensure
+to preserve the tumor / non-tumor class proportions and ensure
 reproducibility.
 
 To stabilise optimisation and make features comparable in scale, we implement
@@ -289,7 +275,7 @@ the SVM, the grid search varies the regularisation parameter $C$ and the RBF
 kernel width $\gamma$ over a small logarithmic grid, with the kernel type
 fixed to RBF.
 
-In both models, we select the hyperparameter combination that maximises mean
+In both models, we select the hyperparameter combination that maximises the mean
 cross-validation accuracy on the training data, retrain the best model on the
 full training set, and evaluate it once on the held-out test set. For every
 model (logistic vs.\ SVM) and dataset D1--D7, we report test accuracy and
@@ -309,29 +295,29 @@ hyperparameters and then evaluate performance using three quantities:
 \end{enumerate}
 
 To select hyperparameters, we use mean cross-validated accuracy: for each
-hyperparameter configuration we run $k$-fold cross-validation on the training
+hyperparameter configuration, we run $k$-fold cross-validation on the training
 data and compute the average accuracy over the $k$ train/validation splits.
-This provides a more stable estimate of generalisation than a single
+This provides a more stable estimate of generalization than a single
 train/validation split and helps reduce overfitting of hyperparameters.
 
 After choosing the best hyperparameters, we retrain the model on the full
 training split and evaluate it once on the held-out test set. On this test
-set we report overall accuracy and macro-averaged F1-score to compare how
+set, we report overall accuracy and macro-averaged F1-score to compare how
 well each model performs across the different datasets.
 
 We evaluate test performance by comparing the predicted label $\hat{y}$ with
-the true label $y$ for every MRI slice. We treat the tumour class as positive
-($y=1$) and the no-tumour class as negative ($y=0$), and define:
+the true label $y$ for every MRI slice. We treat the tumor class as positive
+($y=1$) and the no-tumor class as negative ($y=0$), and define:
 
 \begin{itemize}
     \item $\mathrm{TP}$ (true positives): slices where $y=1$ and $\hat{y}=1$
-          (tumour correctly predicted),
+          (tumor correctly predicted),
     \item $\mathrm{TN}$ (true negatives): slices where $y=0$ and $\hat{y}=0$
-          (no tumour correctly predicted),
+          (no tumor correctly predicted),
     \item $\mathrm{FP}$ (false positives): slices where $y=0$ but $\hat{y}=1$
-          (model predicts a tumour where there is none),
+          (model predicts a tumor where there is none),
     \item $\mathrm{FN}$ (false negatives): slices where $y=1$ but $\hat{y}=0$
-          (model misses a true tumour).
+          (model misses a true tumor).
 \end{itemize}
 
 The overall \emph{accuracy} is the fraction of correct predictions:
@@ -341,8 +327,8 @@ The overall \emph{accuracy} is the fraction of correct predictions:
        {\mathrm{TP} + \mathrm{TN} + \mathrm{FP} + \mathrm{FN}}.
 \]
 
-For each class $c \in \{\text{tumour}, \text{no-tumour}\}$ we compute
-precision, recall, and F1-score. For the positive (tumour) class these are
+For each class $c \in \{\text{tumor}, \text{no-tumor}\}$ we compute
+precision, recall, and F1-score. For the positive (tumor) class these are
 \[
 \text{Precision}_+ =
 \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FP}},
@@ -356,7 +342,7 @@ precision, recall, and F1-score. For the positive (tumour) class these are
      {\text{Precision}_+ + \text{Recall}_+}.
 \]
 Analogous quantities $\text{Precision}_-$, $\text{Recall}_-$, and
-$\text{F1}_-$ are defined for the no-tumour class. The macro-averaged
+$\text{F1}_-$ are defined for the no-tumor class. The macro-averaged
 F1-score reported in our experiments corresponds to scikit-learn’s
 \texttt{f1\_score(y\_test, y\_pred, average="macro")}, which simply computes
 \[
@@ -368,12 +354,12 @@ the unweighted mean of the two class-wise F1-scores.
 \subsubsection{Threats to Validity and Rationale}
 
 Our study has several limitations that affect how broadly the results can be interpreted.  
-First, all experiments use only a single Kaggle dataset~\cite{bohajuBrainTumor} with precomputed radiomic features and 2D slices. How that data was computed and what was used are not fully documented, so performance estimations in this paper may not be able generalize to other scanners, institutions, or clinical populations.
+First, all experiments use only a single Kaggle dataset~\cite{bohajuBrainTumor} with precomputed radiomic features and 2D slices. How that data was computed and what was used are not fully documented, so performance estimations in this paper may not be able to generalize to other scanners, institutions, or clinical populations.
 
 Second, we work at the slice level and do not have patient identifiers. If multiple
 MRI slices come from the same patient and appear in both the training and test splits, this may
 inflate reported accuracy and F1-scores because the model effectively sees very
-similar images during training and testing. Since, there is no provided documentation to verify whether a given MRI slice has a tumor or not, we simply trust that the provided labels are true.
+similar images during training and testing. Since there is no provided documentation to verify whether a given MRI slice has a tumor or not, we simply trust that the provided labels are true.
 
 Third, our models are restricted to logistic regression and RBF-kernel SVMs with
 relatively small hyperparameter grids. More complex architectures (e.g., CNNs) or
