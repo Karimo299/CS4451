@@ -74,7 +74,7 @@ brain tumor classification, MRI, logistic regression, support vector machine, SV
 
 \section{Introduction} 
 
-o According to the Global Cancer Observatory, approximately 320,000 people died from brain and central nervous system cancer in 2022 alone \cite{gco2025}. In Canada, it is estimated that around 3300 people will be diagnosed with brain cancer, and of which 78\% will die as a result of that cancer in 2025 \cite{cancercanada2025}. 
+There are many life-threatening forms of cancer in the world but brain cancer is considered to be one of the most severe and life-threatening. According to the Global Cancer Observatory, approximately 320,000 people died from brain and central nervous system cancer in 2022 alone \cite{gco2025}. In Canada, it is estimated that around 3300 people will be diagnosed with brain cancer, and of which 78\% will die as a result of that cancer in 2025 \cite{cancercanada2025}. 
 
 To improve the patient's chance of living, early detection can be the difference between a full recovery and death. Research indicates that earlier diagnosis and intervention significantly improve survival, with one study noting that a diagnosis within two weeks of symptom appearance and surgical intervention within three weeks is associated with prolonging the patient's survival \cite{kawauchi2025}. 
 
@@ -359,7 +359,7 @@ First, all experiments use only a single Kaggle dataset~\cite{bohajuBrainTumor} 
 Second, we work at the slice level and do not have patient identifiers. If multiple
 MRI slices come from the same patient and appear in both the training and test splits, this may
 inflate reported accuracy and F1-scores because the model effectively sees very
-similar images during training and testing. Since there is no provided documentation to verify whether a given MRI slice has a tumor or not, we simply trust that the provided labels are true.
+similar images during training and testing. Since, there is no provided documentation to verify whether a given MRI slice has a tumor or not, we simply trust that the provided labels are true.
 
 Third, our models are restricted to logistic regression and RBF-kernel SVMs with
 relatively small hyperparameter grids. More complex architectures (e.g., CNNs) or
