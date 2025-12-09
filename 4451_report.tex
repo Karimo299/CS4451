@@ -113,6 +113,8 @@ function (RBF) kernel~\cite{cortes1995support}.
 
 To apply our models, both SVMs use scikit-learn library which provides standard implementations of classifiers, feature scaling, and cross-validation procedures~\cite{pedregosa2011scikit}.
 
+First and second order features are crucial for improving diagnostic, prognostic, and predictive accuracies~\cite{gillies2016}.
+Since imaging is routinely medically practiced, adding radiomic features could result in much better classifications, indicating that radiomic features are useful for detecting the presence of tumors~\cite{aerts2014}.
 
 
 \section{Methods}
@@ -511,26 +513,29 @@ D7 -- Image + all tabular     & 0.850 & 0.919 & 0.965 \\
 
 \subsection{Result Interpretations - Logistic Regression}
 
-\textbf{First-order features alone are limited.} From the results, we can see that first-order features have a low accuracy, and lack higher-level information. These features encode only global intensity statistics and therefore fail to capture local tumor structure. This can be backed up by \cite{gillies2016} and \cite{haralick1973}.
+After examining the results from our logistic regression model findings, these are the key observations we noticed and the conclusions we drew:
+
+\textbf{First-order features alone are limited.} From the results, we can see that first-order features have a low accuracy, and lack higher-level information. 
 
 \textbf{Second-order texture features substantially improve performance.}
-Texture descriptors such as contrast, entropy, and homogeneity encode spatial
-irregularities that are highly characteristic of tumor presence. This can be backed up by \cite{aerts2014}.
+Texture descriptors such as contrast, entropy, and homogeneity encode spatial irregularities that are highly characteristic of tumor presence~\cite{gillies2016}.
 
 \textbf{Image-only inputs perform poorly with linear models.}
-Because logistic regression is a linear classifier, it cannot efficiently model complex spatial patterns present in raw pixel data when the image is flattened. This can be backed up by \cite{lecun2015} and \cite{chen2020} which validates logistic regression as a competitive model when using texture-based radiomic inputs.
+Because logistic regression is a linear classifier, it cannot efficiently model complex spatial patterns present in raw pixel data when the image is flattened.
 
 \textbf{Combining image and tabular features yields the strongest results.}
-The combination provides both high-level radiomic summaries and fine-grained pixel cues, leading to the highest-performing model (D7). \cite{chaddad2018}.
-
+The combination provides both high-level radiomic summaries and fine-grained pixel cues, leading to the highest-performing model for logistic regression~\cite{aerts2014}.
 
 
 \subsection{Result Interpretations - SVM}
-\textbf{Tabular features are strong:} All tabular datasets outperform image datasets in test accuracy, which could indicate that SVM performs better with tabular data than it does with image data with this specific model and dataset. D3 (all tabular features) is also the best performer, which strengthens the indication that tabular features outperform non-tabular features in this evaluation. The idea that tabular data only is strong is backed up by \cite{yun2019}.
 
-\textbf{Image data performs poorly: }D4 (image only) is observed as the weakest performer in test accuracy, which indicates that images alone are not strong. When tabular data is added, performance rises, which shows us that tabular data strengthens the model. Other models perform better with image data, which can be backed up by \cite{wu2019}.
+After examining the results from our SVM model findings, these are the key observations we noticed and the conclusions we drew:
 
-\textbf{First-order features are not enough: }D1 is also observed as a weak performer and it only takes into account first-order features. This is an indication that first-order features are not enough to detect brain tumors and the data itself may not descriptive enough for the model to be accurate in this assessment. \cite{kumar2012} states that first-order features do not tell the model enough and leads to a smaller accuracy.
+\textbf{Tabular features are strong:} All tabular datasets outperform image datasets in test accuracy, which could indicate that SVM performs better with tabular data than it does with image data with this specific model and dataset. D3 (all tabular features) is also the best performer, which strengthens the indication that tabular features outperform non-tabular features in this evaluation~\cite{aerts2014}.
+
+\textbf{Image data performs poorly: }D4 (image only) is observed as the weakest performer in test accuracy, which indicates that images alone are not strong. When tabular data is added, performance rises, which shows us that tabular data strengthens the model.
+
+\textbf{First-order features are not enough: }D1 is also observed as a weak performer and it only takes into account first-order features. This is an indication that first-order features are not enough to detect brain tumors and the data itself may not descriptive enough for the model to be accurate in this assessment. We believe that this leads to a smaller accuracy. When adding first-order and second-order features, the accuracy improved~\cite{gillies2016}.
 
 
 \subsection{Comparison of Logistic Regression and SVM}
@@ -722,34 +727,6 @@ G.~Wahid, A.~Haroon, M.~Samad, and N.~Tamkeen,
 Sep.~26, 2022. Available: \url{https://jsmc.pk/index.php/jsmc/article/view/697}.
 [Accessed: Dec. 8, 2025].
 
-% FOR SVM
-
-\bibitem{yun2019}
-J.~Yun, J.~E.~Park, H.~Lee, S.~Ham, N.~Kim, and H.~S.~Kim,
-``Radiomic features and multilayer perceptron network classifier: A robust MRI classification strategy for distinguishing glioblastoma from primary central nervous system lymphoma,''
-\emph{Scientific Reports}, vol.~9, Art.~no.~5746, 2019.
-doi: 10.1038/s41598-019-42276-w.
-
-\bibitem{wu2019}
-Y.~Wu, J.~H.~Jiang, L.~Chen, J.~Y.~Lu, J.~J.~Ge, F.~T.~Liu,
-J.~T.~Yu, W.~Lin, C.~T.~Zuo, and J.~Wang,
-``Use of radiomic features and support vector machine to distinguish Parkinson's disease cases from normal controls,''
-\emph{Annals of Translational Medicine}, vol.~7, no.~23, p.~773, Dec.~2019.
-doi: 10.21037/atm.2019.11.26.
-
-\bibitem{kumar2012}
-V.~Kumar \emph{et al.},
-``Radiomics: The process and the challenges,''
-\emph{Magnetic Resonance Imaging}, vol.~30, no.~9, pp.~1234--1248, 2012.
-doi: 10.1016/j.mri.2012.06.010.
-
-% FOR LR
-
-\bibitem{haralick1973}
-R.~M.~Haralick, K.~Shanmugam, and I.~Dinstein,
-``Textural features for image classification,''
-\emph{IEEE Transactions on Systems, Man, and Cybernetics}, vol.~SMC-3, no.~6, pp.~610--621, 1973.
-
 \bibitem{gillies2016}
 R.~J.~Gillies, P.~E.~Kinahan, and H.~Hricak,
 ``Radiomics: Images are more than pictures, they are data,''
@@ -761,25 +738,6 @@ H.~J.~W.~L.~Aerts \emph{et al.},
 ``Decoding tumour phenotype by noninvasive imaging using a quantitative radiomics approach,''
 \emph{Nature Communications}, vol.~5, Art.~no.~4006, 2014.
 doi: 10.1038/ncomms5006.
-
-\bibitem{chaddad2018}
-A.~Chaddad, C.~Desrosiers, and M.~Toews,
-``Radiomics in brain tumor: Image assessment, quantitative feature descriptors, and machine-learning approaches,''
-\emph{Journal of Oncology}, vol.~2018, Art.~no.~6927315, 2018.
-doi: 10.1155/2018/6927315.
-
-\bibitem{chen2020}
-L.~Chen, R.~Bentley, R.~Mori \emph{et al.},
-``Machine learning for brain tumor classification using radiomic features,''
-\emph{Scientific Reports}, vol.~10, Art.~no.~150, 2020.
-doi: 10.1038/s41598-019-56798-3.
-
-\bibitem{lecun2015}
-Y.~LeCun, Y.~Bengio, and G.~Hinton,
-``Deep learning,''
-\emph{Nature}, vol.~521, pp.~436--444, 2015.
-doi: 10.1038/nature14539.
-
 
 \end{thebibliography}
 \vspace{12pt}
