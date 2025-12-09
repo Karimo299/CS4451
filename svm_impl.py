@@ -465,6 +465,9 @@ if __name__ == "__main__":
     )
     cross_validation_svm(X_img_only_flat, y_img_only, "SVM (image only)")
 
+
+    
+
     # ------------------------
     # Random-label sanity checks
     # ------------------------

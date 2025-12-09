@@ -74,7 +74,7 @@ brain tumor classification, MRI, logistic regression, support vector machine, SV
 
 \section{Introduction} 
 
-There is many life-threatening forms of cancer in the world but brain cancer is considered to be one of the most severe and life-threatening. According to the Global Cancer Observatory, approximately 320,000 people died from brain and central nervous system cancer in 2022 alone \cite{gco2025}. In Canada, it is estimated that around 3300 people will be diagnosed with brain cancer and of which 78\% will die as a result of that cancer in 2025 \cite{cancercanada2025}. 
+There are many life-threatening forms of cancer in the world but brain cancer is considered to be one of the most severe and life-threatening. According to the Global Cancer Observatory, approximately 320,000 people died from brain and central nervous system cancer in 2022 alone \cite{gco2025}. In Canada, it is estimated that around 3300 people will be diagnosed with brain cancer and of which 78\% will die as a result of that cancer in 2025 \cite{cancercanada2025}. 
 
 
 
@@ -86,7 +86,7 @@ Challenges like this have led a rapidly growing interest in utilizing machine le
 
 
 
-Due to this issues, there has been a growing interest in finding ways to help with tumor detection including using machine learning. A well-designed model may be able to pick up patterns in MRI imaging that are not immediately obvious to the human eye. This will help improve early detection, increase consistency, and reduce the workload placed on radiologists. Despite substantial work in this area, most studies rely exclusively on image-only inputs, or deep learning pipelines. Our work has a different approach, we directly compare different tabular feature sets and image-plus-tabular combinations to see how each dataset configuration affects brain-tumor classification performance the greatest. It offers a simpler approach than most existing studies. 
+Due to this issues, there has been a growing interest in finding ways to help with tumor detection including using machine learning. A well-designed model may be able to pick up patterns in MRI imaging that are not immediately obvious to the human eye. This will help improve early detection, increase consistency, and reduce the workload placed on radiologists. Despite substantial work in this area, most studies rely exclusively on image-only inputs, or deep learning pipelines. Our work has a different approach: we directly compare different tabular feature sets and image-plus-tabular combinations to see how each dataset configuration affects brain-tumor classification performance the greatest. It offers a simpler approach than most existing studies. 
 
 
 
@@ -129,7 +129,7 @@ image-based MRI features with tabular features achieve higher
 performance in classifying tumour vs non-tumour MRI scans than models
 that use a single feature type (tabular-only or image-only), and
 for any given feature subset, an RBF-kernel support vector machine (SVM)
-performs better the logistic regression model.
+performs better than the logistic regression model.
 \end{quote}
 
 To investigate this hypothesis, we define the following objectives:
@@ -246,8 +246,8 @@ where $\mathcal{X}$ denotes the space of all feature vectors constructed as abov
 Logistic regression is essentially a modified form of linear regression that is designed for binary outcomes. Instead of predicting raw continuous values, it models the log-odds of the positive class as a linear function of the inputs. In our case, it models the log-odds of tumour presence and then passes that value through the sigmoid function (a sideways S-shaped curve) to convert it into a probability between 0 and 1. \cite{demaris2013logistic}
 \subsubsection{Support Vector Machine Model}
 
-SVMs are margin-based classifiers that finds the decision boundary which maximizes the distance between classes ~\cite{cortes1995support}. This model can represent non-linear decision boundaries by implicitly mapping the input features into a higher-dimensional
-space through the kernel function. In this paper, we utilize and SVM with a radial basis function (RBF) kernel~\cite{cortes1995support} as our main model,
+SVMs are margin-based classifiers that find the decision boundary which maximizes the distance between classes ~\cite{cortes1995support}. This model can represent non-linear decision boundaries by implicitly mapping the input features into a higher-dimensional
+space through the kernel function. In this paper, we utilize an SVM model with a radial basis function (RBF) kernel~\cite{cortes1995support} as our main model,
 implemented using the machine learning library scikit-learn~\cite{pedregosa2011scikit}.
 
 For each of the seven datasets D1--D7 we have defined above each with a unique feature configuration, we then train a separate RBF SVM model on the corresponding feature vectors $\mathbf{x}$. To avoid features with large values dominating the kernel, we standardize
@@ -371,9 +371,9 @@ Our study has several limitations that affect how broadly the results can be int
 First, all experiments use only a single Kaggle dataset~\cite{bohajuBrainTumor} with precomputed radiomic features and 2D slices. How that data was computed and what was used are not fully documented, so performance estimations in this paper may not be able generalize to other scanners, institutions, or clinical populations.
 
 Second, we work at the slice level and do not have patient identifiers. If multiple
-MRI slices come from the same patient appear in both the training and test splits, this may
+MRI slices come from the same patient and appear in both the training and test splits, this may
 inflate reported accuracy and F1-scores because the model effectively sees very
-similar images during training and testing. Since, we there is no provided documentation to verify whether a given MRI slice has a tumor or not, we simply trust that the provided labels are true.
+similar images during training and testing. Since, there is no provided documentation to verify whether a given MRI slice has a tumor or not, we simply trust that the provided labels are true.
 
 Third, our models are restricted to logistic regression and RBF-kernel SVMs with
 relatively small hyperparameter grids. More complex architectures (e.g., CNNs) or
@@ -596,7 +596,7 @@ These are the main aspects of novelty that characterize our methodology:
     logistic regression can remain stable and highly accurate even in this setting.
     
     \item \textbf{Certain SVMs work better with tabular only data.}
-    Out findings show that the strongest SVM model uses tabular, radiomic features only. This challenges the assumption that adding features improves performance.
+    Our findings show that the strongest SVM model uses tabular, radiomic features only. This challenges the assumption that adding features improves performance.
 
     \item \textbf{A well-regularized linear model can be competitive with a non-linear SVM.}
     Our results suggest that a linear model can be superior to  and outperform a non linear model. 
