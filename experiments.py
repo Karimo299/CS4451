@@ -71,8 +71,8 @@ from sklearn.metrics import (
 # CONFIG
 # ---------------------------------------------------------------------
 
-CSV_PATH = "Brain_Tumor.csv"
-IMAGES_DIR = "images"
+CSV_PATH = "data/Brain Tumor.csv"
+IMAGES_DIR = "data/images"
 TARGET_COL = "Class"
 IMAGE_COL = "Image"
 
